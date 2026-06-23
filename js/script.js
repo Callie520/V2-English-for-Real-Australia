@@ -855,10 +855,19 @@ function generateDailyTasks() {
   today.setHours(0, 0, 0, 0);
   const todayStr = today.toISOString().split('T')[0];
   let tasks = loadDailyTasks();
-  if (tasks.date === todayStr) {
-    return tasks;
-  }
   const info = loadDailyInfo();
+  // 如果已经生成了当天的任务，但每日目标数量发生变化且当天任务尚未开始，则重新生成
+  if (tasks && tasks.date === todayStr) {
+    // newGoal 当前目标，默认为 5
+    const goal = info.newGoal || 5;
+    const newItemsLength = Array.isArray(tasks.newItems) ? tasks.newItems.length : 0;
+    // 当新旧目标数量不一致，且未开始学习（新和复习进度均为 0）时，重新生成当天任务
+    if (newItemsLength === goal && typeof tasks.newCompleted === 'number' && typeof tasks.reviewCompleted === 'number') {
+      // 无需重新生成，直接返回
+      return tasks;
+    }
+    // 若目标数量不一致或进度字段缺失，则在下面重新生成
+  }
   // 计算连续天数：如果前一天完成，则 streak 保持；否则重置。
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
@@ -908,6 +917,7 @@ function updateDailyUI() {
   const newEl = document.getElementById('daily-new-progress');
   if (!newEl) return;
   const tasks = generateDailyTasks();
+  // 读取设置信息以获取 newGoal 和 streak
   const info = loadDailyInfo();
   // 更新数值显示
   document.getElementById('daily-new-progress').textContent = tasks.newCompleted + ' / ' + tasks.newItems.length;
@@ -1084,15 +1094,12 @@ function createCard(item) {
   englishP.textContent = item.english;
   card.appendChild(englishP);
   // 场景或分类
-  const descP = document.createElement('p');
-  descP.className = 'description';
-  // 显示使用场景，若无则显示类别
-  if (item.scenario) {
-    descP.textContent = item.scenario;
-  } else if (item.category) {
-    descP.textContent = item.category;
-  }
-  card.appendChild(descP);
+  // 极简学习模式下，不再在卡片中显示场景或分类信息，减少视觉干扰。
+  // 如果需要可以在此恢复显示，例如：
+  // const descP = document.createElement('p');
+  // descP.className = 'description';
+  // descP.textContent = item.scenario || item.category || '';
+  // card.appendChild(descP);
   // 翻译按钮
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'toggle-btn';
@@ -1107,24 +1114,9 @@ function createCard(item) {
   translationP.textContent = item.chinese;
   card.appendChild(translationP);
 
-  // 用法/场景
-  if (item.scenario) {
-    const usageP = document.createElement('p');
-    usageP.className = 'usage';
-    usageP.innerHTML = '<strong>Scenario 场景:</strong> ' + item.scenario;
-    card.appendChild(usageP);
-  }
-  // 示例句和翻译：若未提供则使用自身内容
-  const exampleText = item.example || item.english;
-  const exampleCn = item.exampleChinese || item.chinese;
-  const exampleP = document.createElement('p');
-  exampleP.className = 'example';
-  exampleP.innerHTML = '<strong>Example 示例:</strong> ' + exampleText;
-  card.appendChild(exampleP);
-  const exampleTransP = document.createElement('p');
-  exampleTransP.className = 'example-translation';
-  exampleTransP.innerHTML = '<strong>Translation 翻译:</strong> ' + exampleCn;
-  card.appendChild(exampleTransP);
+  // 极简学习模式不再显示使用场景、示例句和示例翻译，
+  // 以减小信息量，提升学习效率。
+  // 如果需要恢复显示，可以取消以下注释并依据 item.scenario/example 添加元素。
   // 切换翻译事件
   toggleBtn.addEventListener('click', () => {
     if (translationP.style.display === 'none' || translationP.style.display === '') {
