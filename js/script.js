@@ -1028,26 +1028,146 @@ if (typeof window !== 'undefined') {
   // Australian Vocabulary fallback: in case data.js fails to load under file:// scheme
   if (!window.vocabData) {
     window.vocabData = [
-      { id: 'v-1', english: 'receipt', chinese: '收据' },
-      { id: 'v-2', english: 'roster', chinese: '排班表' },
-      { id: 'v-3', english: 'bulk billing', chinese: '医保全报销' },
-      { id: 'v-4', english: 'rego', chinese: '车辆注册' },
-      { id: 'v-5', english: 'trolley', chinese: '购物车' },
-      { id: 'v-6', english: 'footpath', chinese: '人行道' },
-      { id: 'v-7', english: 'bin', chinese: '垃圾桶' },
-      { id: 'v-8', english: 'tyre', chinese: '轮胎' },
-      { id: 'v-9', english: 'servo', chinese: '加油站' },
-      { id: 'v-10', english: 'bathers', chinese: '泳衣' },
-      { id: 'v-11', english: 'op shop', chinese: '旧货店' },
-      { id: 'v-12', english: 'metho', chinese: '甲醇（酒精）' },
-      { id: 'v-13', english: 'snag', chinese: '香肠' },
-      { id: 'v-14', english: 'cuppa', chinese: '一杯茶' },
-      { id: 'v-15', english: 'arvo', chinese: '下午' },
-      { id: 'v-16', english: 'sanga', chinese: '三明治' },
-      { id: 'v-17', english: 'tradie', chinese: '技工、工人' },
-      { id: 'v-18', english: 'mozzie', chinese: '蚊子' },
-      { id: 'v-19', english: 'firie', chinese: '消防员' },
-      { id: 'v-20', english: 'ripper', chinese: '极好的事' }
+      {
+        id: 'v-1',
+        english: 'receipt',
+        chinese: '收据',
+        example1: 'Keep the receipt as proof of purchase.',
+        example2: 'Can I have a receipt, please?'
+      },
+      {
+        id: 'v-2',
+        english: 'roster',
+        chinese: '排班表',
+        example1: 'I checked the roster for my shift.',
+        example2: 'The manager updated the roster for next week.'
+      },
+      {
+        id: 'v-3',
+        english: 'bulk billing',
+        chinese: '医保全报销',
+        example1: 'The clinic offers bulk billing for Medicare.',
+        example2: 'Is this visit covered by bulk billing?'
+      },
+      {
+        id: 'v-4',
+        english: 'rego',
+        chinese: '车辆注册',
+        example1: 'Don’t forget to renew your car’s rego.',
+        example2: 'You need to pay your rego annually.'
+      },
+      {
+        id: 'v-5',
+        english: 'trolley',
+        chinese: '购物车',
+        example1: 'He pushed the trolley through the grocery store.',
+        example2: 'Put your bags in the trolley.'
+      },
+      {
+        id: 'v-6',
+        english: 'footpath',
+        chinese: '人行道',
+        example1: 'Cyclists should not ride on the footpath.',
+        example2: 'We walked along the footpath by the beach.'
+      },
+      {
+        id: 'v-7',
+        english: 'bin',
+        chinese: '垃圾桶',
+        example1: 'Please put the rubbish in the bin.',
+        example2: 'The bin is collected every Tuesday.'
+      },
+      {
+        id: 'v-8',
+        english: 'tyre',
+        chinese: '轮胎',
+        example1: 'The tyre was flat and needed replacing.',
+        example2: 'Check your tyre pressure regularly.'
+      },
+      {
+        id: 'v-9',
+        english: 'servo',
+        chinese: '加油站',
+        example1: 'I stopped at the servo for petrol.',
+        example2: 'There’s a servo on the highway.'
+      },
+      {
+        id: 'v-10',
+        english: 'bathers',
+        chinese: '泳衣',
+        example1: 'She bought new bathers for the beach.',
+        example2: 'Don’t forget your bathers for the pool.'
+      },
+      {
+        id: 'v-11',
+        english: 'op shop',
+        chinese: '旧货店',
+        example1: 'I found a great jacket at the op shop.',
+        example2: 'Op shops sell second-hand goods.'
+      },
+      {
+        id: 'v-12',
+        english: 'metho',
+        chinese: '甲醇（酒精）',
+        example1: 'We used metho to clean the windows.',
+        example2: 'Metho can remove stubborn stains.'
+      },
+      {
+        id: 'v-13',
+        english: 'snag',
+        chinese: '香肠',
+        example1: 'He cooked snags on the barbecue.',
+        example2: 'I burnt the snag I was cooking.'
+      },
+      {
+        id: 'v-14',
+        english: 'cuppa',
+        chinese: '一杯茶',
+        example1: 'Let’s have a cuppa and chat.',
+        example2: 'He made himself a cuppa after work.'
+      },
+      {
+        id: 'v-15',
+        english: 'arvo',
+        chinese: '下午',
+        example1: 'I’ll see you this arvo.',
+        example2: 'Let’s meet up tomorrow arvo.'
+      },
+      {
+        id: 'v-16',
+        english: 'sanga',
+        chinese: '三明治',
+        example1: 'I made a cheese sanga for lunch.',
+        example2: 'Grab a sanga from the café.'
+      },
+      {
+        id: 'v-17',
+        english: 'tradie',
+        chinese: '技工、工人',
+        example1: 'The tradie fixed the leaking tap.',
+        example2: 'Tradies start work early in the morning.'
+      },
+      {
+        id: 'v-18',
+        english: 'mozzie',
+        chinese: '蚊子',
+        example1: 'Put on spray to keep mozzies away.',
+        example2: 'Mozzies are worst in summer.'
+      },
+      {
+        id: 'v-19',
+        english: 'firie',
+        chinese: '消防员',
+        example1: 'A firie rescued the cat from the tree.',
+        example2: 'Fires are fought by brave firies.'
+      },
+      {
+        id: 'v-20',
+        english: 'ripper',
+        chinese: '极好的事',
+        example1: 'That was a ripper of a goal!',
+        example2: 'We had a ripper time at the party.'
+      }
     ];
   }
 }
@@ -1607,6 +1727,25 @@ function createCard(item, onDone, autoplay = false) {
   translationP.textContent = item.chinese;
   card.appendChild(translationP);
 
+  // For vocabulary items with example sentences, always display examples below the translation.
+  if (item.example1 || item.example2) {
+    const examplesContainer = document.createElement('div');
+    examplesContainer.className = 'examples';
+    if (item.example1) {
+      const ex1 = document.createElement('p');
+      ex1.className = 'example';
+      ex1.textContent = item.example1;
+      examplesContainer.appendChild(ex1);
+    }
+    if (item.example2) {
+      const ex2 = document.createElement('p');
+      ex2.className = 'example';
+      ex2.textContent = item.example2;
+      examplesContainer.appendChild(ex2);
+    }
+    card.appendChild(examplesContainer);
+  }
+
   // 极简学习模式不再显示使用场景、示例句和示例翻译，
   // 以减小信息量，提升学习效率。
   // 如果需要恢复显示，可以取消以下注释并依据 item.scenario/example 添加元素。
@@ -1972,11 +2111,16 @@ function initAnalyticsPage() {
   const ctx = canvas.getContext('2d');
   const history = loadStatsHistory();
   const dates = Object.keys(history).sort();
-  if (dates.length === 0) {
-    // No data available
-    const msg = document.createElement('p');
-    msg.textContent = 'No learning data yet.';
-    canvas.parentNode.appendChild(msg);
+  if (dates.length < 2) {
+    // Not enough data to draw a meaningful chart
+    const msgEl = document.getElementById('analytics-message');
+    if (msgEl) {
+      msgEl.textContent = 'More learning data is needed. Complete more cards to unlock analytics.';
+    } else {
+      const msg = document.createElement('p');
+      msg.textContent = 'More learning data is needed. Complete more cards to unlock analytics.';
+      canvas.parentNode.appendChild(msg);
+    }
     return;
   }
   // Build user retention and theoretical Ebbinghaus retention values
@@ -2290,8 +2434,7 @@ function initQuickAddPage() {
     prepareAllItems();
     // 清空表单
     form.reset();
-    // Reset today's plan so the new item can be scheduled immediately
-    localStorage.removeItem(PLAN_TASK_KEY);
+    // Update today's plan to include new item without resetting progress
     generatePlanTasks();
     updatePlanUI();
     updateStatsUI();
