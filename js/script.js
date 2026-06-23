@@ -1039,8 +1039,8 @@ if (typeof window !== 'undefined') {
         id: 'v-2',
         english: 'roster',
         chinese: '排班表',
-        example1: 'I checked the roster for my shift.',
-        example2: 'The manager updated the roster for next week.'
+        example1: 'I checked my roster for next week.',
+        example2: 'My roster changed at the last minute.'
       },
       {
         id: 'v-3',
@@ -1117,49 +1117,49 @@ if (typeof window !== 'undefined') {
         english: 'snag',
         chinese: '香肠',
         example1: 'He cooked snags on the barbecue.',
-        example2: 'I burnt the snag I was cooking.'
+        example2: 'I love snags with tomato sauce.'
       },
       {
         id: 'v-14',
         english: 'cuppa',
         chinese: '一杯茶',
         example1: 'Let’s have a cuppa and chat.',
-        example2: 'He made himself a cuppa after work.'
+        example2: 'He enjoys a cuppa in the afternoon.'
       },
       {
         id: 'v-15',
         english: 'arvo',
         chinese: '下午',
         example1: 'I’ll see you this arvo.',
-        example2: 'Let’s meet up tomorrow arvo.'
+        example2: 'Let’s catch up this arvo.'
       },
       {
         id: 'v-16',
         english: 'sanga',
         chinese: '三明治',
         example1: 'I made a cheese sanga for lunch.',
-        example2: 'Grab a sanga from the café.'
+        example2: 'He grabbed a sanga on the go.'
       },
       {
         id: 'v-17',
         english: 'tradie',
         chinese: '技工、工人',
         example1: 'The tradie fixed the leaking tap.',
-        example2: 'Tradies start work early in the morning.'
+        example2: 'A tradie installed our new sink.'
       },
       {
         id: 'v-18',
         english: 'mozzie',
         chinese: '蚊子',
         example1: 'Put on spray to keep mozzies away.',
-        example2: 'Mozzies are worst in summer.'
+        example2: 'Mozzies were buzzing everywhere last night.'
       },
       {
         id: 'v-19',
         english: 'firie',
         chinese: '消防员',
         example1: 'A firie rescued the cat from the tree.',
-        example2: 'Fires are fought by brave firies.'
+        example2: 'The firies arrived within minutes.'
       },
       {
         id: 'v-20',
@@ -2434,9 +2434,10 @@ function initQuickAddPage() {
     prepareAllItems();
     // 清空表单
     form.reset();
-    // Update today's plan to include new item without resetting progress
-    generatePlanTasks();
-    updatePlanUI();
+    // Do not regenerate today's plan after adding a custom item. The new item will
+    // be considered when generating a new plan for the next day. Regenerating
+    // the plan here could reset or shuffle today’s tasks. Simply update
+    // statistics if necessary.
     updateStatsUI();
     alert('Saved!');
   });

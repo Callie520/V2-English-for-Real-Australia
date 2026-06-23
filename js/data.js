@@ -543,26 +543,146 @@ const dailyWords = [
 
 // Australian vocabulary words for the dedicated vocabulary module. Each entry includes an id, English word and Chinese translation.
 const vocabData = [
-  { id: 'v-1', english: 'receipt', chinese: '收据' },
-  { id: 'v-2', english: 'roster', chinese: '排班表' },
-  { id: 'v-3', english: 'bulk billing', chinese: '医保全报销' },
-  { id: 'v-4', english: 'rego', chinese: '车辆注册' },
-  { id: 'v-5', english: 'trolley', chinese: '购物车' },
-  { id: 'v-6', english: 'footpath', chinese: '人行道' },
-  { id: 'v-7', english: 'bin', chinese: '垃圾桶' },
-  { id: 'v-8', english: 'tyre', chinese: '轮胎' },
-  { id: 'v-9', english: 'servo', chinese: '加油站' },
-  { id: 'v-10', english: 'bathers', chinese: '泳衣' },
-  { id: 'v-11', english: 'op shop', chinese: '旧货店' },
-  { id: 'v-12', english: 'metho', chinese: '甲醇（酒精）' },
-  { id: 'v-13', english: 'snag', chinese: '香肠' },
-  { id: 'v-14', english: 'cuppa', chinese: '一杯茶' },
-  { id: 'v-15', english: 'arvo', chinese: '下午' },
-  { id: 'v-16', english: 'sanga', chinese: '三明治' },
-  { id: 'v-17', english: 'tradie', chinese: '技工、工人' },
-  { id: 'v-18', english: 'mozzie', chinese: '蚊子' },
-  { id: 'v-19', english: 'firie', chinese: '消防员' },
-  { id: 'v-20', english: 'ripper', chinese: '极好的事' }
+  {
+    id: 'v-1',
+    english: 'receipt',
+    chinese: '收据',
+    example1: 'Keep the receipt as proof of purchase.',
+    example2: 'Can I have a receipt, please?'
+  },
+  {
+    id: 'v-2',
+    english: 'roster',
+    chinese: '排班表',
+    example1: 'I checked my roster for next week.',
+    example2: 'My roster changed at the last minute.'
+  },
+  {
+    id: 'v-3',
+    english: 'bulk billing',
+    chinese: '医保全报销',
+    example1: 'The clinic offers bulk billing for Medicare.',
+    example2: 'Is this visit covered by bulk billing?'
+  },
+  {
+    id: 'v-4',
+    english: 'rego',
+    chinese: '车辆注册',
+    example1: "Don't forget to renew your car’s rego.",
+    example2: 'You need to pay your rego annually.'
+  },
+  {
+    id: 'v-5',
+    english: 'trolley',
+    chinese: '购物车',
+    example1: 'He pushed the trolley through the grocery store.',
+    example2: 'Put your bags in the trolley.'
+  },
+  {
+    id: 'v-6',
+    english: 'footpath',
+    chinese: '人行道',
+    example1: 'Cyclists should not ride on the footpath.',
+    example2: 'We walked along the footpath by the beach.'
+  },
+  {
+    id: 'v-7',
+    english: 'bin',
+    chinese: '垃圾桶',
+    example1: 'Please put the rubbish in the bin.',
+    example2: 'The bin is collected every Tuesday.'
+  },
+  {
+    id: 'v-8',
+    english: 'tyre',
+    chinese: '轮胎',
+    example1: 'The tyre was flat and needed replacing.',
+    example2: 'Check your tyre pressure regularly.'
+  },
+  {
+    id: 'v-9',
+    english: 'servo',
+    chinese: '加油站',
+    example1: 'I stopped at the servo for petrol.',
+    example2: 'There’s a servo on the highway.'
+  },
+  {
+    id: 'v-10',
+    english: 'bathers',
+    chinese: '泳衣',
+    example1: 'She bought new bathers for the beach.',
+    example2: "Don't forget your bathers for the pool."
+  },
+  {
+    id: 'v-11',
+    english: 'op shop',
+    chinese: '旧货店',
+    example1: 'I found a great jacket at the op shop.',
+    example2: 'Op shops sell second-hand goods.'
+  },
+  {
+    id: 'v-12',
+    english: 'metho',
+    chinese: '甲醇（酒精）',
+    example1: 'We used metho to clean the windows.',
+    example2: 'Metho can remove stubborn stains.'
+  },
+  {
+    id: 'v-13',
+    english: 'snag',
+    chinese: '香肠',
+    example1: 'He cooked snags on the barbecue.',
+    example2: 'I love snags with tomato sauce.'
+  },
+  {
+    id: 'v-14',
+    english: 'cuppa',
+    chinese: '一杯茶',
+    example1: "Let's have a cuppa and chat.",
+    example2: 'He enjoys a cuppa in the afternoon.'
+  },
+  {
+    id: 'v-15',
+    english: 'arvo',
+    chinese: '下午',
+    example1: "I'll see you this arvo.",
+    example2: "Let's catch up this arvo."
+  },
+  {
+    id: 'v-16',
+    english: 'sanga',
+    chinese: '三明治',
+    example1: 'I made a cheese sanga for lunch.',
+    example2: 'He grabbed a sanga on the go.'
+  },
+  {
+    id: 'v-17',
+    english: 'tradie',
+    chinese: '技工、工人',
+    example1: 'The tradie fixed the leaking tap.',
+    example2: 'A tradie installed our new sink.'
+  },
+  {
+    id: 'v-18',
+    english: 'mozzie',
+    chinese: '蚊子',
+    example1: 'Put on spray to keep mozzies away.',
+    example2: 'Mozzies were buzzing everywhere last night.'
+  },
+  {
+    id: 'v-19',
+    english: 'firie',
+    chinese: '消防员',
+    example1: 'A firie rescued the cat from the tree.',
+    example2: 'The firies arrived within minutes.'
+  },
+  {
+    id: 'v-20',
+    english: 'ripper',
+    chinese: '极好的事',
+    example1: 'That was a ripper of a goal!',
+    example2: 'We had a ripper time at the party.'
+  }
 ];
 
 // 为了使这些数据可以在其他脚本文件中访问，
