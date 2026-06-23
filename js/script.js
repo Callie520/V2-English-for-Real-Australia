@@ -23,6 +23,52 @@ const STORAGE_KEYS = {
   reviews: 'efra_reviews'
 };
 
+// Storage key for difficult items
+const DIFFICULT_KEY = 'efra_difficult';
+
+/**
+ * Load difficult item ids from localStorage.
+ * @returns {string[]} array of ids
+ */
+function loadDifficult() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(DIFFICULT_KEY) || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+/**
+ * Save difficult ids to localStorage.
+ * @param {string[]} ids
+ */
+function saveDifficult(ids) {
+  localStorage.setItem(DIFFICULT_KEY, JSON.stringify(ids));
+}
+
+/**
+ * Determine if an item id is marked as difficult.
+ * @param {string} id
+ */
+function isDifficult(id) {
+  return loadDifficult().includes(id);
+}
+
+/**
+ * Toggle difficult status for an item.
+ * @param {string} id
+ */
+function toggleDifficult(id) {
+  let list = loadDifficult();
+  if (list.includes(id)) {
+    list = list.filter(d => d !== id);
+  } else {
+    list.push(id);
+  }
+  saveDifficult(list);
+}
+
 // 日常任务与语音存储键
 const DAILY_INFO_KEY = 'efra_dailyInfo';
 const DAILY_TASK_KEY = 'efra_dailyTasks';
@@ -810,6 +856,61 @@ function completeReview(id) {
   updateDailyUI();
 }
 
+/**
+ * Enter today's study mode: sequentially present today's review and new items.
+ * Hides the hero and feature sections, shows a study container, and
+ * automatically progresses to the next card after the user marks each item.
+ */
+function startTodayStudy() {
+  const hero = document.querySelector('.hero');
+  const features = document.querySelector('.features');
+  const dailySection = document.querySelector('.daily-task');
+  const container = document.getElementById('today-study-container');
+  if (!container) return;
+  // Hide non-study sections
+  if (hero) hero.style.display = 'none';
+  if (features) features.style.display = 'none';
+  if (dailySection) dailySection.style.display = 'none';
+  container.style.display = 'block';
+  // Generate today's tasks fresh
+  const tasks = generateDailyTasks();
+  const queueIds = [];
+  // Prioritize today's review items first
+  if (Array.isArray(tasks.reviewItems)) {
+    queueIds.push(...tasks.reviewItems);
+  }
+  if (Array.isArray(tasks.newItems)) {
+    queueIds.push(...tasks.newItems);
+  }
+  let index = 0;
+  function showNext() {
+    // If done, display completion message and update UI
+    if (index >= queueIds.length) {
+      container.innerHTML = '';
+      const msg = document.createElement('p');
+      msg.textContent = '✅ Today’s Goal Completed';
+      container.appendChild(msg);
+      // Refresh daily UI to show completion
+      updateDailyUI();
+      return;
+    }
+    const id = queueIds[index];
+    const item = getItemById(id);
+    if (!item) {
+      index++;
+      showNext();
+      return;
+    }
+    container.innerHTML = '';
+    const card = createCard(item, () => {
+      index++;
+      showNext();
+    });
+    container.appendChild(card);
+  }
+  showNext();
+}
+
 /*
  * 日常任务系统
  * 定义每日新学习量、生成每日新内容和复习内容、记录完成情况以及连续打卡天数。
@@ -968,20 +1069,10 @@ function incrementDailyProgress(type, id) {
  * 获取难题本条目：根据复习次数统计
  */
 function getDifficultItems() {
-  const reviews = loadReviews();
-  const result = [];
-  Object.keys(reviews).forEach(id => {
-    const rec = reviews[id];
-    if (rec.stage < reviewSchedule.length) {
-      const item = getItemById(id);
-      if (item) {
-        result.push({ item, count: rec.count || rec.stage || 0 });
-      }
-    }
-  });
-  // 根据复习次数从大到小排序
-  result.sort((a, b) => (b.count || 0) - (a.count || 0));
-  return result.map(obj => obj.item);
+  // Use user-marked difficult list instead of review count
+  prepareAllItems();
+  const ids = loadDifficult();
+  return ids.map(id => getItemById(id)).filter(item => item !== null);
 }
 
 /*
@@ -1076,7 +1167,7 @@ function formatDate(timestamp) {
 }
 
 // 创建单个卡片的 DOM
-function createCard(item) {
+function createCard(item, onDone) {
   const card = document.createElement('div');
   card.className = 'phrase-card';
   // 语音播放按钮
@@ -1100,14 +1191,16 @@ function createCard(item) {
   // descP.className = 'description';
   // descP.textContent = item.scenario || item.category || '';
   // card.appendChild(descP);
-  // 翻译按钮
+  // Translation toggle button
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'toggle-btn';
-  toggleBtn.dataset.showText = 'Show Chinese';
-  toggleBtn.dataset.hideText = 'Hide Chinese';
-  toggleBtn.textContent = 'Show Chinese';
+  // Show/hide labels for translation toggle. Use simple English-only labels.
+  toggleBtn.dataset.showText = 'Chinese';
+  toggleBtn.dataset.hideText = 'English';
+  // Default state: translation hidden, so button shows 'Chinese'
+  toggleBtn.textContent = toggleBtn.dataset.showText;
   card.appendChild(toggleBtn);
-  // 翻译内容
+  // Translation content
   const translationP = document.createElement('p');
   translationP.className = 'translation';
   translationP.style.display = 'none';
@@ -1119,6 +1212,7 @@ function createCard(item) {
   // 如果需要恢复显示，可以取消以下注释并依据 item.scenario/example 添加元素。
   // 切换翻译事件
   toggleBtn.addEventListener('click', () => {
+    // Toggle visibility of translation and update button label
     if (translationP.style.display === 'none' || translationP.style.display === '') {
       translationP.style.display = 'block';
       toggleBtn.textContent = toggleBtn.dataset.hideText;
@@ -1130,32 +1224,55 @@ function createCard(item) {
   // 动作按钮容器
   const actionsDiv = document.createElement('div');
   actionsDiv.className = 'card-actions';
-  // 收藏按钮
+  // Favorite button
   const favBtn = document.createElement('button');
   favBtn.className = 'favorite';
   function updateFavBtn() {
     if (isFavorite(item.id)) {
       favBtn.classList.add('active');
-      favBtn.textContent = '★ Favorite 收藏';
+      favBtn.textContent = '★ Favorite';
     } else {
       favBtn.classList.remove('active');
-      favBtn.textContent = '☆ Favorite 收藏';
+      favBtn.textContent = '☆ Favorite';
     }
   }
   updateFavBtn();
   favBtn.addEventListener('click', () => {
     toggleFavorite(item.id);
     updateFavBtn();
-    // 更新收藏页面或搜索结果
+    // Refresh current page if applicable
     if (typeof window.currentPageRender === 'function') {
       window.currentPageRender();
     }
   });
   actionsDiv.appendChild(favBtn);
+
+  // Difficult button
+  const diffBtn = document.createElement('button');
+  diffBtn.className = 'difficult-btn';
+  function updateDiffBtn() {
+    if (isDifficult(item.id)) {
+      diffBtn.classList.add('active');
+      diffBtn.textContent = 'Difficult ✔';
+    } else {
+      diffBtn.classList.remove('active');
+      diffBtn.textContent = 'Difficult';
+    }
+  }
+  updateDiffBtn();
+  diffBtn.addEventListener('click', () => {
+    toggleDifficult(item.id);
+    updateDiffBtn();
+    // Re-render difficult page if necessary
+    if (typeof window.currentPageRender === 'function') {
+      window.currentPageRender();
+    }
+  });
+  actionsDiv.appendChild(diffBtn);
   // 复习与学习按钮
   function appendReviewControls() {
-    // 清空旧按钮（除了第一个收藏按钮）
-    while (actionsDiv.childNodes.length > 1) {
+    // Clear old buttons except the first two (favorite and difficult)
+    while (actionsDiv.childNodes.length > 2) {
       actionsDiv.removeChild(actionsDiv.lastChild);
     }
     const record = getReview(item.id);
@@ -1163,22 +1280,27 @@ function createCard(item) {
       // 未加入复习
       const learnBtn = document.createElement('button');
       learnBtn.className = 'learn-btn';
-      learnBtn.textContent = 'Mark as Learned 已学习';
+      learnBtn.textContent = 'Learned';
       learnBtn.addEventListener('click', () => {
         markLearned(item.id);
         appendReviewControls();
-        if (typeof window.currentPageRender === 'function') {
+        // If a sequential callback is provided, call it after marking learned
+        if (typeof onDone === 'function') {
+          onDone();
+        } else if (typeof window.currentPageRender === 'function') {
           window.currentPageRender();
         }
       });
       actionsDiv.appendChild(learnBtn);
       const addReviewBtn = document.createElement('button');
       addReviewBtn.className = 'add-review-btn';
-      addReviewBtn.textContent = 'Add to Review 加入复习';
+      addReviewBtn.textContent = '♡ Review';
       addReviewBtn.addEventListener('click', () => {
         addToReview(item.id);
         appendReviewControls();
-        if (typeof window.currentPageRender === 'function') {
+        if (typeof onDone === 'function') {
+          onDone();
+        } else if (typeof window.currentPageRender === 'function') {
           window.currentPageRender();
         }
       });
@@ -1189,7 +1311,7 @@ function createCard(item) {
         // 已掌握
         const masteredBtn = document.createElement('button');
         masteredBtn.className = 'master';
-        masteredBtn.textContent = 'Mastered 已掌握';
+        masteredBtn.textContent = 'Mastered';
         masteredBtn.disabled = true;
         actionsDiv.appendChild(masteredBtn);
       } else {
@@ -1200,11 +1322,13 @@ function createCard(item) {
           // 今日复习
           const reviewBtn = document.createElement('button');
           reviewBtn.className = 'review-today';
-          reviewBtn.textContent = 'Review Today 今日复习';
+          reviewBtn.textContent = 'Review Today';
           reviewBtn.addEventListener('click', () => {
             completeReview(item.id);
             appendReviewControls();
-            if (typeof window.currentPageRender === 'function') {
+            if (typeof onDone === 'function') {
+              onDone();
+            } else if (typeof window.currentPageRender === 'function') {
               window.currentPageRender();
             }
           });
@@ -1220,11 +1344,13 @@ function createCard(item) {
         // 提供手动标记为已掌握按钮
         const masterBtn = document.createElement('button');
         masterBtn.className = 'master-btn';
-        masterBtn.textContent = 'Mastered 已掌握';
+        masterBtn.textContent = 'Mastered';
         masterBtn.addEventListener('click', () => {
           markMastered(item.id);
           appendReviewControls();
-          if (typeof window.currentPageRender === 'function') {
+          if (typeof onDone === 'function') {
+            onDone();
+          } else if (typeof window.currentPageRender === 'function') {
             window.currentPageRender();
           }
         });
@@ -1346,7 +1472,7 @@ function initFavoritesPage() {
     container.innerHTML = '';
     if (items.length === 0) {
       const p = document.createElement('p');
-      p.textContent = 'No favorites yet. 尚未收藏任何内容';
+      p.textContent = 'No favorites yet.';
       container.appendChild(p);
     } else {
       items.forEach(item => {
@@ -1392,7 +1518,7 @@ function initReviewPage() {
     todayList.innerHTML = '';
     if (todayArr.length === 0) {
       const p = document.createElement('p');
-      p.textContent = 'No reviews today. 今天没有需要复习的内容';
+      p.textContent = 'No reviews today.';
       todayList.appendChild(p);
     } else {
       todayArr.forEach(({ item }) => {
@@ -1402,7 +1528,7 @@ function initReviewPage() {
     upcomingList.innerHTML = '';
     if (upcomingArr.length === 0) {
       const p = document.createElement('p');
-      p.textContent = 'No upcoming reviews. 没有未来复习计划';
+      p.textContent = 'No upcoming reviews.';
       upcomingList.appendChild(p);
     } else {
       upcomingArr.forEach(({ item, record }) => {
@@ -1413,7 +1539,7 @@ function initReviewPage() {
     masteredList.innerHTML = '';
     if (masteredArr.length === 0) {
       const p = document.createElement('p');
-      p.textContent = 'No mastered items yet. 尚未有已掌握的内容';
+      p.textContent = 'No mastered items yet.';
       masteredList.appendChild(p);
     } else {
       masteredArr.forEach(({ item }) => {
@@ -1431,13 +1557,19 @@ function initReviewPage() {
     const totalCount = ccLen + nLen + lLen + dsLen + dpLen + dwLen;
     const favCount = loadFavorites().length;
     const masteredCount = masteredArr.length;
-    const todayCount = todayArr.length;
+    // Review items count includes today and upcoming (items not yet mastered)
+    const reviewCount = todayArr.length + upcomingArr.length;
+    const diffCount = loadDifficult().length;
+    const info = loadDailyInfo();
+    const currentStreak = info.streak || 0;
     statsDiv.innerHTML = '';
     const statsList = [
-      `Total learnable items: ${totalCount} / 总学习条数：${totalCount}`,
-      `Favorites: ${favCount} / 收藏数：${favCount}`,
-      `Mastered: ${masteredCount} / 已掌握：${masteredCount}`,
-      `Today’s reviews: ${todayCount} / 今日待复习：${todayCount}`
+      `Total Items: ${totalCount}`,
+      `Favorites: ${favCount}`,
+      `Review Items: ${reviewCount}`,
+      `Mastered: ${masteredCount}`,
+      `Difficult Items: ${diffCount}`,
+      `Current Streak: ${currentStreak}`
     ];
     statsList.forEach(text => {
       const p = document.createElement('p');
@@ -1603,7 +1735,7 @@ function initSmartAddPage() {
       itemsMap = {};
       prepareAllItems();
       form.reset();
-      alert('Saved! 已保存');
+      alert('Saved!');
     });
   }
 }
@@ -1617,7 +1749,7 @@ function initDifficultPage() {
     container.innerHTML = '';
     if (!items || items.length === 0) {
       const p = document.createElement('p');
-      p.textContent = 'No difficult items yet. 暂无难题';
+      p.textContent = 'No difficult items yet.';
       container.appendChild(p);
       return;
     }
@@ -1711,15 +1843,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const info = loadDailyInfo();
       info.newGoal = parseInt(goalSelectEl.value, 10);
       saveDailyInfo(info);
-      // 如果今天任务尚未开始（未完成任何新或复习），则重新生成任务
-      const tasks = loadDailyTasks();
-      const todayStr = new Date().toISOString().split('T')[0];
-      if (tasks.date === todayStr && tasks.newCompleted === 0 && tasks.reviewCompleted === 0) {
-        // 清除当前任务并重新生成
-        localStorage.removeItem(DAILY_TASK_KEY);
-        generateDailyTasks();
-      }
+      // 无论是否已经开始学习，变更每日新量后都重新生成当天任务并重置进度
+      localStorage.removeItem(DAILY_TASK_KEY);
+      generateDailyTasks();
       updateDailyUI();
+    });
+  }
+
+  // Start today's study mode when the button is clicked
+  const startBtn = document.getElementById('start-today-btn');
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      startTodayStudy();
     });
   }
 

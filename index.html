@@ -28,17 +28,16 @@
                 <span class="bar"></span>
             </button>
             <ul class="nav-links">
-                <li><a href="index.html">Home 首页</a></li>
-                <li><a href="daily.html">Daily English 每日英语</a></li>
-                <li><a href="childcare.html">Childcare English 幼儿园英语</a></li>
-                <li><a href="nursing.html">Nursing English 护理英语</a></li>
-                <li><a href="life.html">Australian Life 澳洲生活</a></li>
-                <li><a href="favorites.html">Favorites 收藏</a></li>
-                <li><a href="review.html">Review Center 复习中心</a></li>
-                <li><a href="search.html">Search 搜索</a></li>
-                <li><a href="quickadd.html">Quick Add 快速添加</a></li>
-                <li><a href="smartadd.html">Smart Add 智能添加</a></li>
-                <li><a href="difficult.html">My Difficult Items 难题本</a></li>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="daily.html">Daily English</a></li>
+                <li><a href="childcare.html">Childcare English</a></li>
+                <li><a href="nursing.html">Nursing English</a></li>
+                <li><a href="life.html">Australian Life</a></li>
+                <li><a href="favorites.html">Favorites</a></li>
+                <li><a href="review.html">Review Center</a></li>
+                <li><a href="search.html">Search</a></li>
+                <li><a href="quickadd.html">Quick Add</a></li>
+                <li><a href="difficult.html">My Difficult Items</a></li>
                 <!-- Voice selection -->
                 <li class="voice-select-item">
                     <select id="voice-select" title="Select accent">
@@ -54,20 +53,23 @@
     <main>
         <!-- 今日任务区：每日目标和完成情况，移至首页顶部以便于用户第一时间看到 -->
         <section class="daily-task">
-            <h2>Today's Goal 今日目标</h2>
+            <h2>Today's Goal</h2>
             <div class="task-info">
-                <p><strong>New 新内容:</strong> <span id="daily-new-progress">0 / 0</span></p>
-                <p><strong>Review 复习:</strong> <span id="daily-review-progress">0 / 0</span></p>
-                <p><strong>Completion 完成率:</strong> <span id="daily-completion">0%</span></p>
-                <p><strong>🔥 Streak 连续天数:</strong> <span id="daily-streak">0</span> Days</p>
+                <p><strong>New:</strong> <span id="daily-new-progress">0 / 0</span></p>
+                <p><strong>Review:</strong> <span id="daily-review-progress">0 / 0</span></p>
+                <p><strong>Completion:</strong> <span id="daily-completion">0%</span></p>
+                <p><strong>🔥 Streak:</strong> <span id="daily-streak">0</span> Days</p>
             </div>
             <div class="daily-settings">
-                <label for="daily-goal-select">Daily New Items 每日新内容:</label>
+                <label for="daily-goal-select">Daily New Items:</label>
                 <select id="daily-goal-select">
                     <option value="5">5</option>
                     <option value="10">10</option>
                     <option value="20">20</option>
                 </select>
+            </div>
+            <div class="daily-start" style="margin-top:1rem;">
+                <button id="start-today-btn" class="btn">Start Today</button>
             </div>
         </section>
 
@@ -114,6 +116,8 @@
                 </div>
             </div>
         </section>
+        <!-- Container for today's study mode; hidden by default. Displayed when Start Today is clicked -->
+        <section id="today-study-container" style="display:none; padding:1rem;"></section>
     </main>
 
     <footer>

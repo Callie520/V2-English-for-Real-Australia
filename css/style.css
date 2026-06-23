@@ -370,9 +370,42 @@ footer {
   background: #ffb703;
 }
 
+/* Difficult active state */
+.card-actions button.difficult-btn.active {
+  background: #e07a5f;
+}
+
 /* 已掌握按钮或状态样式 */
 .card-actions button.master {
   background: #777;
+}
+
+/* Quick Add form styling: vertical layout for mobile */
+.add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.add-form label {
+  font-weight: 500;
+}
+
+.add-form input,
+.add-form textarea,
+.add-form select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.add-form .btn {
+  margin-top: 0.5rem;
+  align-self: flex-start;
 }
 
 /* 语音播放按钮样式 */
