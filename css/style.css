@@ -1,0 +1,470 @@
+/*
+ * 样式文件：定义全站样式和响应式布局。
+ * 颜色、字体等通过 CSS 变量控制，方便后续修改。
+ */
+
+:root {
+  /* 主要颜色（参考 Duolingo 的绿色） */
+  --primary-color: #58cc02;
+  /* 次要颜色，用于按钮和强调 */
+  --secondary-color: #0077b6;
+  /* 基本文本颜色 */
+  --text-color: #333;
+  /* 背景颜色 */
+  --background-color: #f6f6f6;
+}
+
+/* 全局重置 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* 导航栏样式 */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar .brand {
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--text-color);
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover {
+  color: var(--primary-color);
+}
+
+/* 移动端菜单按钮 */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  width: 30px;
+  height: 21px;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.menu-toggle .bar {
+  width: 100%;
+  height: 3px;
+  background: var(--text-color);
+  border-radius: 3px;
+}
+
+/* 首屏欢迎区 */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 2rem 1rem;
+}
+
+.hero-text {
+  max-width: 500px;
+}
+
+.hero h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.hero p {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero img {
+  width: 320px;
+  max-width: 100%;
+  border-radius: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
+}
+
+/* 功能卡片区 */
+.features {
+  padding: 2rem 1rem;
+}
+
+.features h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+.card p {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background: #4fa203;
+}
+
+/* 页脚 */
+footer {
+  text-align: center;
+  padding: 1rem;
+  background: #fff;
+  margin-top: 2rem;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+  font-size: 0.9rem;
+}
+
+/* Install App button styles */
+.install-app-container {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.install-btn {
+  padding: 0.6rem 1.2rem;
+  background: var(--secondary-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.install-btn:hover {
+  background: #005a8e;
+}
+/* 分割各个内页用的标题区域 */
+.section-header {
+  padding: 2rem 1rem;
+  text-align: center;
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.section-header h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.section-header p {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* 短语列表页面 */
+.phrases {
+  padding: 2rem 1rem;
+  max-width: 800px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.phrase-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.phrase-card p.english {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.phrase-card p.description {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.phrase-card button.toggle-btn {
+  padding: 0.4rem 0.8rem;
+  background: var(--secondary-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+
+.phrase-card button.toggle-btn:hover {
+  background: #005b8a;
+}
+
+.phrase-card p.translation {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+/* 响应式：移动端导航菜单显示切换 */
+@media (max-width: 768px) {
+  .nav-links {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    flex-direction: column;
+    background: #fff;
+    display: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-links li {
+    text-align: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .nav-links li:last-child {
+    border-bottom: none;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  /* 当 nav-links 拥有 .show-menu 类时，显示菜单 */
+  .nav-links.show-menu {
+    display: flex;
+  }
+  /* 调整 hero 区在移动设备上的布局 */
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hero img {
+    margin-top: 1.5rem;
+  }
+}
+
+/* 内容容器通用样式：用于动态生成的学习卡片 */
+.content-container {
+  max-width: 800px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+/* 每日学习模块样式 */
+.daily-section .daily-item {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1rem;
+}
+
+.daily-section .daily-item h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+/* 卡片操作按钮区域 */
+.card-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.card-actions button {
+  padding: 0.3rem 0.6rem;
+  background: var(--secondary-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.card-actions button:hover {
+  background: #005b8a;
+}
+
+/* 收藏激活状态 */
+.card-actions button.favorite.active {
+  background: #ffb703;
+}
+
+/* 已掌握按钮或状态样式 */
+.card-actions button.master {
+  background: #777;
+}
+
+/* 语音播放按钮样式 */
+.phrase-card .listen-btn {
+  background: var(--secondary-color);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.phrase-card .listen-btn:hover {
+  background: #005b8a;
+}
+
+/* 用法、示例及翻译样式 */
+.phrase-card p.usage,
+.phrase-card p.example,
+.phrase-card p.example-translation {
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+  color: #555;
+}
+
+.phrase-card p.example-translation {
+  color: #888;
+  font-style: italic;
+}
+
+/* 导航栏语音选择样式 */
+.voice-select-item select {
+  padding: 0.3rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+}
+
+/* 今日任务区样式 */
+.daily-task {
+  padding: 1rem;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border-radius: 12px;
+  max-width: 800px;
+  margin: 1rem auto;
+  text-align: center;
+}
+
+.daily-task .task-info {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.daily-task .task-info p {
+  margin: 0;
+}
+
+.daily-task .daily-settings {
+  margin-top: 0.5rem;
+}
+
+/* 复习中心标题和中文注释 */
+.review-section h2 {
+  font-size: 1.4rem;
+  margin: 1.5rem 1rem 0.5rem;
+  color: var(--primary-color);
+}
+
+.review-section .cn {
+  font-size: 0.8rem;
+  color: var(--secondary-color);
+}
+
+/* 统计信息区域样式 */
+.stats {
+  padding: 1rem;
+  font-size: 0.9rem;
+  max-width: 800px;
+  margin: auto;
+}
+
+.stats p {
+  margin-bottom: 0.5rem;
+}

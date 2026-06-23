@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Add | English for Real Australia</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <!-- PWA manifest and meta tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2272C9">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body data-page="quickadd">
+    <header>
+        <nav class="navbar">
+            <div class="brand">English for Real Australia</div>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            <ul class="nav-links">
+                <li><a href="index.html">Home 首页</a></li>
+                <li><a href="daily.html">Daily English 每日英语</a></li>
+                <li><a href="childcare.html">Childcare English 幼儿园英语</a></li>
+                <li><a href="nursing.html">Nursing English 护理英语</a></li>
+                <li><a href="life.html">Australian Life 澳洲生活</a></li>
+                <li><a href="favorites.html">Favorites 收藏</a></li>
+                <li><a href="review.html">Review Center 复习中心</a></li>
+                <li><a href="search.html">Search 搜索</a></li>
+                <li><a href="quickadd.html" class="active">Quick Add 快速添加</a></li>
+                <li><a href="smartadd.html">Smart Add 智能添加</a></li>
+                <li><a href="difficult.html">My Difficult Items 难题本</a></li>
+                <li class="voice-select-item">
+                    <select id="voice-select" title="Select accent">
+                        <option value="au">AU</option>
+                        <option value="uk">UK</option>
+                        <option value="us">US</option>
+                    </select>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section class="section-header">
+            <h1>Quick Add</h1>
+            <p>Add a new phrase quickly to your personal library.</p>
+        </section>
+        <section class="form-section">
+            <form id="quick-add-form" class="add-form">
+                <label for="qa-english">English</label>
+                <input type="text" id="qa-english" required placeholder="Enter English sentence">
+                <label for="qa-chinese">Chinese</label>
+                <input type="text" id="qa-chinese" required placeholder="输入中文翻译">
+                <label for="qa-category">Category</label>
+                <select id="qa-category">
+                    <option value="daily">Daily English</option>
+                    <option value="childcare">Childcare English</option>
+                    <option value="nursing">Nursing English</option>
+                    <option value="life">Australian Life</option>
+                </select>
+                <label for="qa-notes">Notes (optional)</label>
+                <textarea id="qa-notes" rows="3" placeholder="Any additional notes"></textarea>
+                <button type="submit" class="btn">Save 保存</button>
+            </form>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 English for Real Australia</p>
+    </footer>
+    <script src="js/data.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>

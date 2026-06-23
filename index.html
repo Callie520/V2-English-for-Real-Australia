@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English for Real Australia</title>
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- 引入 Google 字体，支持中英文显示 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <!-- PWA manifest and meta tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2272C9">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+    <!-- 导航栏，包含网站名称和菜单 -->
+    <header>
+        <nav class="navbar">
+            <div class="brand">English for Real Australia</div>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            <ul class="nav-links">
+                <li><a href="index.html">Home 首页</a></li>
+                <li><a href="daily.html">Daily English 每日英语</a></li>
+                <li><a href="childcare.html">Childcare English 幼儿园英语</a></li>
+                <li><a href="nursing.html">Nursing English 护理英语</a></li>
+                <li><a href="life.html">Australian Life 澳洲生活</a></li>
+                <li><a href="favorites.html">Favorites 收藏</a></li>
+                <li><a href="review.html">Review Center 复习中心</a></li>
+                <li><a href="search.html">Search 搜索</a></li>
+                <li><a href="quickadd.html">Quick Add 快速添加</a></li>
+                <li><a href="smartadd.html">Smart Add 智能添加</a></li>
+                <li><a href="difficult.html">My Difficult Items 难题本</a></li>
+                <!-- Voice selection -->
+                <li class="voice-select-item">
+                    <select id="voice-select" title="Select accent">
+                        <option value="au">AU</option>
+                        <option value="uk">UK</option>
+                        <option value="us">US</option>
+                    </select>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- 首屏欢迎区，展示欢迎信息和示意图 -->
+        <section class="hero">
+            <div class="hero-text">
+                <h1>Welcome to English for Real Australia</h1>
+                <p>Your friendly guide to everyday Australian English.</p>
+            </div>
+            <img src="images/hero.png" alt="Mobile app preview for English for Real Australia">
+        </section>
+
+        <!-- 今日任务区：每日目标和完成情况 -->
+        <section class="daily-task">
+            <h2>Today's Goal 今日目标</h2>
+            <div class="task-info">
+                <p><strong>New 新内容:</strong> <span id="daily-new-progress">0 / 0</span></p>
+                <p><strong>Review 复习:</strong> <span id="daily-review-progress">0 / 0</span></p>
+                <p><strong>Completion 完成率:</strong> <span id="daily-completion">0%</span></p>
+                <p><strong>🔥 Streak 连续天数:</strong> <span id="daily-streak">0</span> Days</p>
+            </div>
+            <div class="daily-settings">
+                <label for="daily-goal-select">Daily New Items 每日新内容:</label>
+                <select id="daily-goal-select">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+        </section>
+        <!-- Install App button: displayed via JavaScript when PWA installation is supported -->
+        <div class="install-app-container">
+            <button id="install-button" class="install-btn" style="display:none;">Install App</button>
+        </div>
+        
+        <!-- 功能概览，包含四个主要模块的简介 -->
+        <section class="features">
+            <h2>Learn by Topic</h2>
+            <div class="cards">
+                <div class="card">
+                    <span class="icon">🗨️</span>
+                    <h3>Daily English</h3>
+                    <p>Learn common Australian expressions used every day.</p>
+                    <a href="daily.html" class="btn">Start Learning</a>
+                </div>
+                <div class="card">
+                    <span class="icon">🧸</span>
+                    <h3>Childcare English</h3>
+                    <p>Useful phrases for communicating with educators.</p>
+                    <a href="childcare.html" class="btn">Start Learning</a>
+                </div>
+                <div class="card">
+                    <span class="icon">🩺</span>
+                    <h3>Nursing English</h3>
+                    <p>Essential language for care and medical settings.</p>
+                    <a href="nursing.html" class="btn">Start Learning</a>
+                </div>
+                <div class="card">
+                    <span class="icon">🦘</span>
+                    <h3>Australian Life</h3>
+                    <p>Everyday language for living in Australia.</p>
+                    <a href="life.html" class="btn">Start Learning</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 English for Real Australia</p>
+    </footer>
+
+    <!-- 数据文件包含各个学习模块的短语数据 -->
+    <script src="js/data.js"></script>
+    <!-- 主脚本文件 -->
+    <script src="js/script.js"></script>
+</body>
+</html>
