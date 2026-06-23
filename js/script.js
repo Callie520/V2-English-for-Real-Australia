@@ -26,6 +26,248 @@ const STORAGE_KEYS = {
 // Storage key for difficult items
 const DIFFICULT_KEY = 'efra_difficult';
 
+// ----- Daily plan settings and tasks -----
+// Users can define how many new items to learn per category each day. The plan consists of
+// categories: childcare, nursing, australian (life), and vocabulary. These values are
+// stored in localStorage under PLAN_SETTINGS_KEY. A separate plan task object stores
+// today's queued items and progress under PLAN_TASK_KEY.
+
+const PLAN_SETTINGS_KEY = 'efra_planSettings';
+const PLAN_TASK_KEY = 'efra_planTasks';
+
+/**
+ * Load daily plan settings from localStorage. If not present, return default settings.
+ * @returns {{childcare:number, nursing:number, australian:number, vocab:number}}
+ */
+function loadPlanSettings() {
+  try {
+    const obj = JSON.parse(localStorage.getItem(PLAN_SETTINGS_KEY) || '{}');
+    return {
+      childcare: typeof obj.childcare === 'number' ? obj.childcare : 5,
+      nursing: typeof obj.nursing === 'number' ? obj.nursing : 5,
+      australian: typeof obj.australian === 'number' ? obj.australian : 5,
+      vocab: typeof obj.vocab === 'number' ? obj.vocab : 10
+    };
+  } catch (e) {
+    return { childcare: 5, nursing: 5, australian: 5, vocab: 10 };
+  }
+}
+
+/**
+ * Save daily plan settings to localStorage.
+ * @param {{childcare:number, nursing:number, australian:number, vocab:number}} settings
+ */
+function savePlanSettings(settings) {
+  localStorage.setItem(PLAN_SETTINGS_KEY, JSON.stringify(settings));
+}
+
+/**
+ * Load today's plan tasks from localStorage.
+ * @returns {object} the task object or an empty object
+ */
+function loadPlanTasks() {
+  try {
+    const t = JSON.parse(localStorage.getItem(PLAN_TASK_KEY) || '{}');
+    return t || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+/** Save plan tasks to localStorage */
+function savePlanTasks(tasks) {
+  localStorage.setItem(PLAN_TASK_KEY, JSON.stringify(tasks));
+}
+
+/**
+ * Generate today's plan tasks if they are missing or outdated. The plan includes
+ * items by category in a fixed order: childcare, nursing, australian, vocab. For each
+ * category, the list contains due review items followed by new items selected
+ * from the available pool (items without review records). When existing tasks
+ * match today's date and settings, they are reused.
+ * @returns {object} the generated task object
+ */
+function generatePlanTasks() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
+  let tasks = loadPlanTasks();
+  const settings = loadPlanSettings();
+  // determine if tasks need regeneration
+  if (tasks && tasks.date === todayStr && tasks.plan) {
+    // Verify that each category's target matches the current plan settings. If not, regenerate.
+    let match = true;
+    for (const cat of ['childcare','nursing','australian','vocab']) {
+      const seg = tasks.plan[cat];
+      const expected = settings[cat];
+      // If the saved target does not equal the expected target, regenerate
+      if (!seg || seg.target !== expected) {
+        match = false;
+        break;
+      }
+    }
+    if (match) {
+      return tasks;
+    }
+  }
+  // prepare items
+  prepareAllItems();
+  const reviews = loadReviews();
+  const reviewKeys = Object.keys(reviews);
+  // compute due review items by category
+  const dueByCat = { childcare: [], nursing: [], australian: [], vocab: [] };
+  const todayTime = today.getTime();
+  reviewKeys.forEach(id => {
+    const rec = reviews[id];
+    if (!rec) return;
+    if (rec.stage >= reviewSchedule.length) return; // mastered
+    if (rec.nextReview <= todayTime) {
+      const item = itemsMap[id];
+      if (item && dueByCat[item.category]) {
+        dueByCat[item.category].push(id);
+      }
+    }
+  });
+  // compute new items by category: items without review record
+  const newByCat = { childcare: [], nursing: [], australian: [], vocab: [] };
+  allItems.forEach(it => {
+    if (!reviews[it.id] && newByCat[it.category]) {
+      newByCat[it.category].push(it.id);
+    }
+  });
+  // Do not shuffle new items within each category. We maintain the original order to provide a consistent learning path.
+  // Build tasks.plan
+  const plan = {};
+  for (const cat of ['childcare','nursing','australian','vocab']) {
+    const dueList = dueByCat[cat] || [];
+    const targetCount = settings[cat] || 0;
+    // Determine number of new items needed (target minus due count; allow due items beyond target)
+    let needed = targetCount - dueList.length;
+    if (needed < 0) needed = 0;
+    const newList = newByCat[cat] ? newByCat[cat].slice(0, needed) : [];
+    const list = dueList.concat(newList);
+    // Save the target count separately; not the list length. This ensures regeneration when settings change.
+    plan[cat] = { target: targetCount, list: list, completed: 0 };
+  }
+  tasks = {
+    date: todayStr,
+    plan,
+    completed: false
+  };
+  savePlanTasks(tasks);
+  return tasks;
+}
+
+/**
+ * Update the plan progress display on the home page. Called on load and after progress changes.
+ */
+function updatePlanUI() {
+  const elChild = document.getElementById('plan-childcare-progress');
+  if (!elChild) return;
+  const tasks = generatePlanTasks();
+  const plan = tasks.plan || {};
+  function setProgress(id, seg) {
+    const el = document.getElementById(id);
+    if (el) {
+      const total = seg ? seg.list.length : 0;
+      const done = seg ? seg.completed : 0;
+      el.textContent = done + ' / ' + total;
+    }
+  }
+  setProgress('plan-childcare-progress', plan.childcare);
+  setProgress('plan-nursing-progress', plan.nursing);
+  setProgress('plan-australian-progress', plan.australian);
+  setProgress('plan-vocab-progress', plan.vocab);
+}
+
+/**
+ * Compute and update learning statistics on the home page. It uses review records to count
+ * learned, review and mastered items, and reads streak from daily info.
+ */
+function updateStatsUI() {
+  const learnedEl = document.getElementById('stat-learned');
+  if (!learnedEl) return;
+  prepareAllItems();
+  const reviews = loadReviews();
+  let learned = 0;
+  let reviewCount = 0;
+  let mastered = 0;
+  Object.keys(reviews).forEach(id => {
+    const rec = reviews[id];
+    learned++;
+    if (rec.stage >= reviewSchedule.length) {
+      mastered++;
+    } else {
+      reviewCount++;
+    }
+  });
+  learnedEl.textContent = learned;
+  const reviewEl = document.getElementById('stat-review');
+  if (reviewEl) reviewEl.textContent = reviewCount;
+  const masteredEl = document.getElementById('stat-mastered');
+  if (masteredEl) masteredEl.textContent = mastered;
+  const info = loadDailyInfo();
+  const streakEl = document.getElementById('stat-streak');
+  const streakVal = info.streak || 0;
+  if (streakEl) streakEl.textContent = streakVal;
+  // Update streak milestone icons: add active class if streak meets or exceeds milestone
+  const icons = document.querySelectorAll('.streak-icon');
+  icons.forEach(icon => {
+    const required = parseInt(icon.dataset.days, 10);
+    if (!isNaN(required) && streakVal >= required) {
+      icon.classList.add('active');
+    } else {
+      icon.classList.remove('active');
+    }
+  });
+}
+
+/**
+ * Increment progress for a specific category in today's plan. When all tasks are completed,
+ * mark the plan as completed and update streak.
+ * @param {string} cat The category to increment
+ */
+function incrementPlanProgress(cat) {
+  let tasks = generatePlanTasks();
+  if (!tasks.plan || !tasks.plan[cat]) return;
+  const seg = tasks.plan[cat];
+  if (typeof seg.completed !== 'number') seg.completed = 0;
+  seg.completed++;
+  // Save updated tasks
+  savePlanTasks(tasks);
+  updatePlanUI();
+  updateStatsUI();
+  // Check if all categories are done
+  let allDone = true;
+  for (const key of Object.keys(tasks.plan)) {
+    const s = tasks.plan[key];
+    if (s.completed < s.list.length) {
+      allDone = false;
+      break;
+    }
+  }
+  tasks.completed = allDone;
+  savePlanTasks(tasks);
+  if (allDone) {
+    // update streak and last completion date
+    const info = loadDailyInfo();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    if (info.lastCompletionDate === yesterdayStr) {
+      info.streak = (info.streak || 0) + 1;
+    } else {
+      info.streak = 1;
+    }
+    info.lastCompletionDate = todayStr;
+    saveDailyInfo(info);
+    updateStatsUI();
+  }
+}
+
 /**
  * Load difficult item ids from localStorage.
  * @returns {string[]} array of ids
@@ -724,6 +966,32 @@ if (typeof window !== 'undefined') {
       { english: 'brolly', chinese: '雨伞' }
     ];
   }
+
+  // Australian Vocabulary fallback: in case data.js fails to load under file:// scheme
+  if (!window.vocabData) {
+    window.vocabData = [
+      { id: 'v-1', english: 'receipt', chinese: '收据' },
+      { id: 'v-2', english: 'roster', chinese: '排班表' },
+      { id: 'v-3', english: 'bulk billing', chinese: '医保全报销' },
+      { id: 'v-4', english: 'rego', chinese: '车辆注册' },
+      { id: 'v-5', english: 'trolley', chinese: '购物车' },
+      { id: 'v-6', english: 'footpath', chinese: '人行道' },
+      { id: 'v-7', english: 'bin', chinese: '垃圾桶' },
+      { id: 'v-8', english: 'tyre', chinese: '轮胎' },
+      { id: 'v-9', english: 'servo', chinese: '加油站' },
+      { id: 'v-10', english: 'bathers', chinese: '泳衣' },
+      { id: 'v-11', english: 'op shop', chinese: '旧货店' },
+      { id: 'v-12', english: 'metho', chinese: '甲醇（酒精）' },
+      { id: 'v-13', english: 'snag', chinese: '香肠' },
+      { id: 'v-14', english: 'cuppa', chinese: '一杯茶' },
+      { id: 'v-15', english: 'arvo', chinese: '下午' },
+      { id: 'v-16', english: 'sanga', chinese: '三明治' },
+      { id: 'v-17', english: 'tradie', chinese: '技工、工人' },
+      { id: 'v-18', english: 'mozzie', chinese: '蚊子' },
+      { id: 'v-19', english: 'firie', chinese: '消防员' },
+      { id: 'v-20', english: 'ripper', chinese: '极好的事' }
+    ];
+  }
 }
 
 // 简单的全局错误监听，用于在页面上显示脚本错误，方便调试。
@@ -800,16 +1068,12 @@ function addToReview(id) {
     nextReview: Date.now()
   };
   saveReviews(reviews);
-  // 更新今日新学习进度（如果属于今日新项目）
-  incrementDailyProgress('new', id);
+  // For the new plan-based system we no longer update daily progress here.
 }
 
 function markLearned(id) {
-  // 标记为已学习与加入复习逻辑相同
+  // Marking as learned is equivalent to adding to review. No daily progress updates in the new plan.
   addToReview(id);
-  // 更新今日新学习进度
-  incrementDailyProgress('new', id);
-  updateDailyUI();
 }
 
 function markMastered(id) {
@@ -819,10 +1083,7 @@ function markMastered(id) {
     nextReview: 0
   };
   saveReviews(reviews);
-  // 标记掌握时也视为完成学习和复习
-  incrementDailyProgress('new', id);
-  incrementDailyProgress('review', id);
-  updateDailyUI();
+  // No daily progress update needed for the plan-based system
 }
 
 // 完成一次复习：根据当前 stage 计算下一次复习时间
@@ -851,9 +1112,7 @@ function completeReview(id) {
   }
   reviews[id] = record;
   saveReviews(reviews);
-  // 更新今日复习进度
-  incrementDailyProgress('review', id);
-  updateDailyUI();
+  // No daily progress update needed for the plan-based system
 }
 
 /**
@@ -907,6 +1166,69 @@ function startTodayStudy() {
       showNext();
     });
     container.appendChild(card);
+  }
+  showNext();
+}
+
+/**
+ * Start the daily study flow according to the user's plan settings. This function
+ * builds a queue of today's review and new items grouped by category and
+ * presents them one by one. After each action the next item is shown
+ * automatically. When all items are completed, a completion message is shown
+ * and streak/plan progress is updated.
+ */
+function startTodayStudyPlan() {
+  prepareAllItems();
+  const hero = document.querySelector('.hero');
+  const featuresSection = document.querySelector('.features');
+  const planSection = document.querySelector('.today-plan');
+  const statsSection = document.querySelector('.learning-stats');
+  const container = document.getElementById('today-study-container');
+  if (!container) return;
+  // Hide non-study sections on home page
+  if (hero) hero.style.display = 'none';
+  if (featuresSection) featuresSection.style.display = 'none';
+  if (planSection) planSection.style.display = 'none';
+  if (statsSection) statsSection.style.display = 'none';
+  container.style.display = 'block';
+  // Generate tasks
+  const tasks = generatePlanTasks();
+  const order = ['childcare','nursing','australian','vocab'];
+  const queue = [];
+  order.forEach(cat => {
+    const seg = tasks.plan && tasks.plan[cat];
+    if (seg && Array.isArray(seg.list)) {
+      seg.list.forEach(id => {
+        queue.push({ id, category: cat });
+      });
+    }
+  });
+  let index = 0;
+  function showNext() {
+    if (index >= queue.length) {
+      container.innerHTML = '';
+      const msg = document.createElement('p');
+      msg.textContent = '✅ Today’s Plan Completed';
+      container.appendChild(msg);
+      // regenerate UI
+      updatePlanUI();
+      updateStatsUI();
+      return;
+    }
+    const { id, category } = queue[index];
+    const item = getItemById(id);
+    if (!item) {
+      index++;
+      showNext();
+      return;
+    }
+    container.innerHTML = '';
+    const card = createCard(item, () => {
+      index++;
+      showNext();
+    }, true);
+    container.appendChild(card);
+    // Auto play is handled by createCard when third argument true
   }
   showNext();
 }
@@ -1100,10 +1422,18 @@ function prepareAllItems() {
       itemsMap[item.id] = obj;
     });
   }
-  // 澳洲生活
+  // Australian English (life)
   if (Array.isArray(window.lifeData)) {
     window.lifeData.forEach(item => {
-      const obj = Object.assign({}, item, { category: 'life' });
+      const obj = Object.assign({}, item, { category: 'australian' });
+      allItems.push(obj);
+      itemsMap[item.id] = obj;
+    });
+  }
+  // Australian vocabulary
+  if (Array.isArray(window.vocabData)) {
+    window.vocabData.forEach(item => {
+      const obj = Object.assign({}, item, { category: 'vocab' });
       allItems.push(obj);
       itemsMap[item.id] = obj;
     });
@@ -1167,7 +1497,7 @@ function formatDate(timestamp) {
 }
 
 // 创建单个卡片的 DOM
-function createCard(item, onDone) {
+function createCard(item, onDone, autoplay = false) {
   const card = document.createElement('div');
   card.className = 'phrase-card';
   // 语音播放按钮
@@ -1221,138 +1551,88 @@ function createCard(item, onDone) {
       toggleBtn.textContent = toggleBtn.dataset.showText;
     }
   });
-  // 动作按钮容器
+  // Actions container: holds review and mastery buttons
   const actionsDiv = document.createElement('div');
   actionsDiv.className = 'card-actions';
-  // Favorite button
-  const favBtn = document.createElement('button');
-  favBtn.className = 'favorite';
-  function updateFavBtn() {
-    if (isFavorite(item.id)) {
-      favBtn.classList.add('active');
-      favBtn.textContent = '★ Favorite';
-    } else {
-      favBtn.classList.remove('active');
-      favBtn.textContent = '☆ Favorite';
-    }
-  }
-  updateFavBtn();
-  favBtn.addEventListener('click', () => {
-    toggleFavorite(item.id);
-    updateFavBtn();
-    // Refresh current page if applicable
-    if (typeof window.currentPageRender === 'function') {
-      window.currentPageRender();
-    }
-  });
-  actionsDiv.appendChild(favBtn);
-
-  // Difficult button
-  const diffBtn = document.createElement('button');
-  diffBtn.className = 'difficult-btn';
-  function updateDiffBtn() {
-    if (isDifficult(item.id)) {
-      diffBtn.classList.add('active');
-      diffBtn.textContent = 'Difficult ✔';
-    } else {
-      diffBtn.classList.remove('active');
-      diffBtn.textContent = 'Difficult';
-    }
-  }
-  updateDiffBtn();
-  diffBtn.addEventListener('click', () => {
-    toggleDifficult(item.id);
-    updateDiffBtn();
-    // Re-render difficult page if necessary
-    if (typeof window.currentPageRender === 'function') {
-      window.currentPageRender();
-    }
-  });
-  actionsDiv.appendChild(diffBtn);
   // 复习与学习按钮
   function appendReviewControls() {
-    // Clear old buttons except the first two (favorite and difficult)
-    while (actionsDiv.childNodes.length > 2) {
-      actionsDiv.removeChild(actionsDiv.lastChild);
+    // Clear all existing buttons
+    while (actionsDiv.firstChild) {
+      actionsDiv.removeChild(actionsDiv.firstChild);
     }
     const record = getReview(item.id);
+    // Helper to proceed to next card if callback is provided
+    function finishAction() {
+      // Increment plan progress if applicable
+      if (item.category) {
+        incrementPlanProgress(item.category);
+      }
+      if (typeof onDone === 'function') {
+        onDone();
+      } else if (typeof window.currentPageRender === 'function') {
+        window.currentPageRender();
+      }
+    }
+    // Determine buttons based on review status
     if (!record) {
-      // 未加入复习
-      const learnBtn = document.createElement('button');
-      learnBtn.className = 'learn-btn';
-      learnBtn.textContent = 'Learned';
-      learnBtn.addEventListener('click', () => {
-        markLearned(item.id);
-        appendReviewControls();
-        // If a sequential callback is provided, call it after marking learned
-        if (typeof onDone === 'function') {
-          onDone();
-        } else if (typeof window.currentPageRender === 'function') {
-          window.currentPageRender();
-        }
-      });
-      actionsDiv.appendChild(learnBtn);
-      const addReviewBtn = document.createElement('button');
-      addReviewBtn.className = 'add-review-btn';
-      addReviewBtn.textContent = '♡ Review';
-      addReviewBtn.addEventListener('click', () => {
+      // Item not yet in review: provide Review and Mastered options
+      const reviewBtn = document.createElement('button');
+      reviewBtn.className = 'add-review-btn';
+      reviewBtn.textContent = '❤️ Review';
+      reviewBtn.addEventListener('click', () => {
         addToReview(item.id);
         appendReviewControls();
-        if (typeof onDone === 'function') {
-          onDone();
-        } else if (typeof window.currentPageRender === 'function') {
-          window.currentPageRender();
-        }
+        finishAction();
       });
-      actionsDiv.appendChild(addReviewBtn);
+      actionsDiv.appendChild(reviewBtn);
+      const masterBtn = document.createElement('button');
+      masterBtn.className = 'master-btn';
+      masterBtn.textContent = '✅ Mastered';
+      masterBtn.addEventListener('click', () => {
+        markMastered(item.id);
+        appendReviewControls();
+        finishAction();
+      });
+      actionsDiv.appendChild(masterBtn);
     } else {
-      // 已加入复习
+      // Item is in review schedule
       if (record.stage >= reviewSchedule.length) {
-        // 已掌握
+        // Already mastered: show disabled button
         const masteredBtn = document.createElement('button');
         masteredBtn.className = 'master';
-        masteredBtn.textContent = 'Mastered';
+        masteredBtn.textContent = '✅ Mastered';
         masteredBtn.disabled = true;
         actionsDiv.appendChild(masteredBtn);
       } else {
-        // 判断是否需要今日复习
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (record.nextReview <= today.getTime()) {
-          // 今日复习
+          // Due for review today
           const reviewBtn = document.createElement('button');
           reviewBtn.className = 'review-today';
-          reviewBtn.textContent = 'Review Today';
+          reviewBtn.textContent = '❤️ Review';
           reviewBtn.addEventListener('click', () => {
             completeReview(item.id);
             appendReviewControls();
-            if (typeof onDone === 'function') {
-              onDone();
-            } else if (typeof window.currentPageRender === 'function') {
-              window.currentPageRender();
-            }
+            finishAction();
           });
           actionsDiv.appendChild(reviewBtn);
         } else {
-          // 未到复习时间
+          // Not yet due: show schedule disabled
           const scheduleBtn = document.createElement('button');
           scheduleBtn.className = 'scheduled';
           scheduleBtn.textContent = 'Review on ' + formatDate(record.nextReview);
           scheduleBtn.disabled = true;
           actionsDiv.appendChild(scheduleBtn);
         }
-        // 提供手动标记为已掌握按钮
+        // Always allow manual mastery
         const masterBtn = document.createElement('button');
         masterBtn.className = 'master-btn';
-        masterBtn.textContent = 'Mastered';
+        masterBtn.textContent = '✅ Mastered';
         masterBtn.addEventListener('click', () => {
           markMastered(item.id);
           appendReviewControls();
-          if (typeof onDone === 'function') {
-            onDone();
-          } else if (typeof window.currentPageRender === 'function') {
-            window.currentPageRender();
-          }
+          finishAction();
         });
         actionsDiv.appendChild(masterBtn);
       }
@@ -1360,6 +1640,13 @@ function createCard(item, onDone) {
   }
   appendReviewControls();
   card.appendChild(actionsDiv);
+  // Auto play pronunciation when enabled
+  if (autoplay) {
+    // Use a slight delay to ensure DOM updates
+    setTimeout(() => {
+      speak(item.english);
+    }, 100);
+  }
   return card;
 }
 
@@ -1426,17 +1713,7 @@ function initChildcarePage() {
   window.currentPageRender = renderPage;
   renderPage();
 
-  // 调试信息：显示幼儿园数据数量
-  try {
-    const dbgChild = document.createElement('div');
-    dbgChild.style.background = '#eee';
-    dbgChild.style.color = '#000';
-    dbgChild.style.padding = '0.2rem';
-    dbgChild.style.fontSize = '0.8rem';
-    const len = Array.isArray(window.childcareData) ? window.childcareData.length : 'null';
-    dbgChild.textContent = 'Debug childcare count: ' + len;
-    document.body.appendChild(dbgChild);
-  } catch (e) {}
+  // No debug info in production
 }
 
 // 初始化护理页面
@@ -1459,6 +1736,49 @@ function initLifePage() {
   }
   window.currentPageRender = renderPage;
   renderPage();
+}
+
+// Initialize vocabulary page
+function initVocabularyPage() {
+  prepareAllItems();
+  const container = document.getElementById('vocab-container');
+  function renderPage() {
+    renderList(container, window.vocabData || []);
+  }
+  window.currentPageRender = renderPage;
+  renderPage();
+}
+
+// Initialize task settings page: allow users to configure daily plan targets
+function initSettingsPage() {
+  const form = document.getElementById('task-settings-form');
+  if (!form) return;
+  // Populate form with current settings
+  const settings = loadPlanSettings();
+  const childcareInput = document.getElementById('setting-childcare');
+  const nursingInput = document.getElementById('setting-nursing');
+  const australianInput = document.getElementById('setting-australian');
+  const vocabInput = document.getElementById('setting-vocab');
+  if (childcareInput) childcareInput.value = settings.childcare;
+  if (nursingInput) nursingInput.value = settings.nursing;
+  if (australianInput) australianInput.value = settings.australian;
+  if (vocabInput) vocabInput.value = settings.vocab;
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const newSettings = {
+      childcare: parseInt(childcareInput.value, 10) || 0,
+      nursing: parseInt(nursingInput.value, 10) || 0,
+      australian: parseInt(australianInput.value, 10) || 0,
+      vocab: parseInt(vocabInput.value, 10) || 0
+    };
+    savePlanSettings(newSettings);
+    // reset today's tasks so new settings take effect
+    localStorage.removeItem(PLAN_TASK_KEY);
+    generatePlanTasks();
+    updatePlanUI();
+    updateStatsUI();
+    alert('Settings saved!');
+  });
 }
 
 // 初始化收藏页面
@@ -1600,7 +1920,7 @@ function initSearchPage() {
     resultsContainer.innerHTML = '';
     if (matched.length === 0) {
       const p = document.createElement('p');
-      p.textContent = 'No results found. 未找到结果';
+      p.textContent = 'No results found.';
       resultsContainer.appendChild(p);
     } else {
       matched.forEach(item => {
@@ -1629,9 +1949,11 @@ function initQuickAddPage() {
     const eng = document.getElementById('qa-english').value.trim();
     const cn = document.getElementById('qa-chinese').value.trim();
     const category = document.getElementById('qa-category').value;
-    const notes = document.getElementById('qa-notes').value.trim();
+    // Notes field may be absent in simplified quick add form
+    const notesElem = document.getElementById('qa-notes');
+    const notes = notesElem ? notesElem.value.trim() : '';
     if (!eng || !cn) {
-      alert('Please enter both English and Chinese. 请输入英文和中文');
+      alert('Please enter both English and Chinese.');
       return;
     }
     const id = 'custom-' + Date.now();
@@ -1643,15 +1965,16 @@ function initQuickAddPage() {
       category
     };
     // 存入本地数组（根据类别）
+    // Append the new item to the appropriate category dataset
     if (category === 'childcare') {
       window.childcareData.push(newItem);
     } else if (category === 'nursing') {
       window.nursingData.push(newItem);
-    } else if (category === 'life') {
+    } else if (category === 'australian') {
       window.lifeData.push(newItem);
-    } else if (category === 'daily') {
-      if (!window.dailyPhrases) window.dailyPhrases = [];
-      window.dailyPhrases.push({ english: eng, chinese: cn });
+    } else if (category === 'vocab') {
+      if (!Array.isArray(window.vocabData)) window.vocabData = [];
+      window.vocabData.push(newItem);
     }
     // 保存到自定义存储
     try {
@@ -1667,7 +1990,12 @@ function initQuickAddPage() {
     prepareAllItems();
     // 清空表单
     form.reset();
-    alert('Saved! 已保存');
+    // Reset today's plan so the new item can be scheduled immediately
+    localStorage.removeItem(PLAN_TASK_KEY);
+    generatePlanTasks();
+    updatePlanUI();
+    updateStatsUI();
+    alert('Saved!');
   });
 }
 
@@ -1679,7 +2007,7 @@ function initSmartAddPage() {
     generateBtn.addEventListener('click', () => {
       const eng = document.getElementById('sa-english').value.trim();
       if (!eng) {
-        alert('Please enter English first. 请输入英文');
+        alert('Please enter English first.');
         return;
       }
       // 简单的自动填充逻辑：示例和翻译直接引用输入
@@ -1700,7 +2028,7 @@ function initSmartAddPage() {
       const exampleCn = document.getElementById('sa-example-translation').value.trim();
       const category = document.getElementById('sa-category').value;
       if (!eng) {
-        alert('Please enter English. 请输入英文');
+        alert('Please enter English.');
         return;
       }
       const id = 'custom-' + Date.now();
@@ -1767,9 +2095,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // 确认 body 上的 data-page 属性
   const page = document.body.dataset.page;
   switch (page) {
-    case 'daily':
-      initDailyPage();
-      break;
     case 'childcare':
       initChildcarePage();
       break;
@@ -1778,9 +2103,6 @@ document.addEventListener('DOMContentLoaded', () => {
       break;
     case 'life':
       initLifePage();
-      break;
-    case 'favorites':
-      initFavoritesPage();
       break;
     case 'review':
       initReviewPage();
@@ -1791,8 +2113,14 @@ document.addEventListener('DOMContentLoaded', () => {
     case 'quickadd':
       initQuickAddPage();
       break;
-    case 'smartadd':
-      initSmartAddPage();
+    case 'vocabulary':
+      initVocabularyPage();
+      break;
+    case 'settings':
+      initSettingsPage();
+      break;
+    case 'favorites':
+      initFavoritesPage();
       break;
     case 'difficult':
       initDifficultPage();
@@ -1833,28 +2161,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 每日任务初始化及 UI 更新（仅首页相关）
-  // 在 DOMContentLoaded 后调用一次生成任务和更新 UI
-  generateDailyTasks();
-  updateDailyUI();
-  // 监听每日新量选择器变化
-  const goalSelectEl = document.getElementById('daily-goal-select');
-  if (goalSelectEl) {
-    goalSelectEl.addEventListener('change', () => {
-      const info = loadDailyInfo();
-      info.newGoal = parseInt(goalSelectEl.value, 10);
-      saveDailyInfo(info);
-      // 无论是否已经开始学习，变更每日新量后都重新生成当天任务并重置进度
-      localStorage.removeItem(DAILY_TASK_KEY);
-      generateDailyTasks();
-      updateDailyUI();
-    });
-  }
+  // Initialise daily plan and statistics for the home page
+  updatePlanUI();
+  updateStatsUI();
 
   // Start today's study mode when the button is clicked
   const startBtn = document.getElementById('start-today-btn');
   if (startBtn) {
     startBtn.addEventListener('click', () => {
-      startTodayStudy();
+      startTodayStudyPlan();
     });
   }
 

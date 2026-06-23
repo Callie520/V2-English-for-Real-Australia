@@ -429,6 +429,29 @@ footer {
   background: #005b8a;
 }
 
+/* Streak milestone icons */
+.streak-icons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.streak-icon {
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  background: #eee;
+  color: #555;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.streak-icon.active {
+  background: var(--primary-color);
+  color: #fff;
+}
+
 /* 用法、示例及翻译样式 */
 .phrase-card p.usage,
 .phrase-card p.example,

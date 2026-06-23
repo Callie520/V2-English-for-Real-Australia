@@ -541,6 +541,30 @@ const dailyWords = [
   { english: 'brolly', chinese: '雨伞' }
 ];
 
+// Australian vocabulary words for the dedicated vocabulary module. Each entry includes an id, English word and Chinese translation.
+const vocabData = [
+  { id: 'v-1', english: 'receipt', chinese: '收据' },
+  { id: 'v-2', english: 'roster', chinese: '排班表' },
+  { id: 'v-3', english: 'bulk billing', chinese: '医保全报销' },
+  { id: 'v-4', english: 'rego', chinese: '车辆注册' },
+  { id: 'v-5', english: 'trolley', chinese: '购物车' },
+  { id: 'v-6', english: 'footpath', chinese: '人行道' },
+  { id: 'v-7', english: 'bin', chinese: '垃圾桶' },
+  { id: 'v-8', english: 'tyre', chinese: '轮胎' },
+  { id: 'v-9', english: 'servo', chinese: '加油站' },
+  { id: 'v-10', english: 'bathers', chinese: '泳衣' },
+  { id: 'v-11', english: 'op shop', chinese: '旧货店' },
+  { id: 'v-12', english: 'metho', chinese: '甲醇（酒精）' },
+  { id: 'v-13', english: 'snag', chinese: '香肠' },
+  { id: 'v-14', english: 'cuppa', chinese: '一杯茶' },
+  { id: 'v-15', english: 'arvo', chinese: '下午' },
+  { id: 'v-16', english: 'sanga', chinese: '三明治' },
+  { id: 'v-17', english: 'tradie', chinese: '技工、工人' },
+  { id: 'v-18', english: 'mozzie', chinese: '蚊子' },
+  { id: 'v-19', english: 'firie', chinese: '消防员' },
+  { id: 'v-20', english: 'ripper', chinese: '极好的事' }
+];
+
 // 为了使这些数据可以在其他脚本文件中访问，
 // 将它们直接挂载到全局 window 对象（浏览器环境中）。
 // 在某些环境下使用 file:// 可能导致 typeof window 判断异常，因此直接赋值。
@@ -552,6 +576,7 @@ try {
   window.dailySentences = dailySentences;
   window.dailyPhrases = dailyPhrases;
   window.dailyWords = dailyWords;
+  window.vocabData = vocabData;
 } catch (e) {
   // 如果 window 不存在（如 Node 环境），忽略赋值。
 }

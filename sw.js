@@ -5,15 +5,17 @@ const CACHE_NAME = 'efra-cache-v1';
 const ASSETS_TO_CACHE = [
   './',
   'index.html',
-  'daily.html',
   'childcare.html',
   'nursing.html',
   'life.html',
-  'favorites.html',
+  'vocabulary.html',
+  'settings.html',
   'review.html',
   'search.html',
   'quickadd.html',
-  'smartadd.html',
+  // We no longer cache daily.html and smartadd.html as these pages are removed from navigation.
+  // Optionally cache favorites and difficult pages for backward compatibility if accessed directly.
+  'favorites.html',
   'difficult.html',
   'css/style.css',
   'js/script.js',

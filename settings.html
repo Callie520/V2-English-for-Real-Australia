@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quick Add | English for Real Australia</title>
+    <title>Task Settings | English for Real Australia</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
-    <!-- PWA manifest and meta tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2272C9">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
-<body data-page="quickadd">
+<body data-page="settings">
     <header>
         <nav class="navbar">
             <div class="brand">English for Real Australia</div>
@@ -32,8 +31,8 @@
                 <li><a href="vocabulary.html">Australian Vocabulary</a></li>
                 <li><a href="review.html">Review Center</a></li>
                 <li><a href="search.html">Search</a></li>
-                <li><a href="quickadd.html" class="active">Quick Add</a></li>
-                <li><a href="settings.html">Task Settings</a></li>
+                <li><a href="quickadd.html">Quick Add</a></li>
+                <li><a href="settings.html" class="active">Task Settings</a></li>
                 <li class="voice-select-item">
                     <select id="voice-select" title="Select accent">
                         <option value="au">AU</option>
@@ -46,24 +45,20 @@
     </header>
     <main>
         <section class="section-header">
-            <h1>Quick Add</h1>
-            <p>Add a new phrase quickly to your personal library.</p>
+            <h1>Task Settings</h1>
+            <p>Customize how many items you learn from each category every day.</p>
         </section>
-        <section class="form-section">
-            <form id="quick-add-form" class="add-form">
-                <label for="qa-english">English</label>
-                <input type="text" id="qa-english" required placeholder="Enter English sentence">
-                <label for="qa-chinese">Chinese</label>
-                <input type="text" id="qa-chinese" required placeholder="Enter Chinese translation">
-                <label for="qa-category">Category</label>
-                <select id="qa-category">
-                    <option value="childcare">Childcare English</option>
-                    <option value="nursing">Nursing English</option>
-                    <option value="australian">Australian English</option>
-                    <option value="vocab">Australian Vocabulary</option>
-                </select>
-                <!-- Notes field removed to simplify the form for quick entry -->
-                <button type="submit" class="btn">Save</button>
+        <section class="settings-form">
+            <form id="task-settings-form" class="add-form" style="max-width:500px; margin:auto;">
+                <label for="setting-childcare">Childcare English</label>
+                <input type="number" id="setting-childcare" min="0" max="50" step="1" required>
+                <label for="setting-nursing">Nursing English</label>
+                <input type="number" id="setting-nursing" min="0" max="50" step="1" required>
+                <label for="setting-australian">Australian English</label>
+                <input type="number" id="setting-australian" min="0" max="50" step="1" required>
+                <label for="setting-vocab">Vocabulary</label>
+                <input type="number" id="setting-vocab" min="0" max="50" step="1" required>
+                <button type="submit" class="btn" style="margin-top:1rem;">Save Settings</button>
             </form>
         </section>
     </main>

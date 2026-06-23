@@ -29,15 +29,15 @@
             </button>
             <ul class="nav-links">
                 <li><a href="index.html">Home</a></li>
-                <li><a href="daily.html">Daily English</a></li>
+                <!-- Navigation: simplified topic structure. Daily and difficult pages removed. -->
                 <li><a href="childcare.html">Childcare English</a></li>
                 <li><a href="nursing.html">Nursing English</a></li>
-                <li><a href="life.html">Australian Life</a></li>
-                <li><a href="favorites.html">Favorites</a></li>
+                <li><a href="life.html">Australian English</a></li>
+                <li><a href="vocabulary.html">Australian Vocabulary</a></li>
                 <li><a href="review.html">Review Center</a></li>
                 <li><a href="search.html">Search</a></li>
                 <li><a href="quickadd.html">Quick Add</a></li>
-                <li><a href="difficult.html">My Difficult Items</a></li>
+                <li><a href="settings.html">Task Settings</a></li>
                 <!-- Voice selection -->
                 <li class="voice-select-item">
                     <select id="voice-select" title="Select accent">
@@ -51,25 +51,35 @@
     </header>
 
     <main>
-        <!-- 今日任务区：每日目标和完成情况，移至首页顶部以便于用户第一时间看到 -->
-        <section class="daily-task">
-            <h2>Today's Goal</h2>
-            <div class="task-info">
-                <p><strong>New:</strong> <span id="daily-new-progress">0 / 0</span></p>
-                <p><strong>Review:</strong> <span id="daily-review-progress">0 / 0</span></p>
-                <p><strong>Completion:</strong> <span id="daily-completion">0%</span></p>
-                <p><strong>🔥 Streak:</strong> <span id="daily-streak">0</span> Days</p>
+        <!-- Today's plan shows progress for each category and a button to start the daily study flow. -->
+        <section class="today-plan">
+            <h2>Today's Plan</h2>
+            <div class="plan-info">
+                <p><strong>Childcare:</strong> <span id="plan-childcare-progress">0 / 0</span></p>
+                <p><strong>Nursing:</strong> <span id="plan-nursing-progress">0 / 0</span></p>
+                <p><strong>Australian English:</strong> <span id="plan-australian-progress">0 / 0</span></p>
+                <p><strong>Vocabulary:</strong> <span id="plan-vocab-progress">0 / 0</span></p>
             </div>
-            <div class="daily-settings">
-                <label for="daily-goal-select">Daily New Items:</label>
-                <select id="daily-goal-select">
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                </select>
-            </div>
-            <div class="daily-start" style="margin-top:1rem;">
+            <div class="plan-start" style="margin-top:1rem;">
                 <button id="start-today-btn" class="btn">Start Today</button>
+            </div>
+        </section>
+
+        <!-- Learning statistics summarise overall progress and streak -->
+        <section class="learning-stats">
+            <h2>Learning Statistics</h2>
+            <div class="stat-info">
+                <p><strong>Learned:</strong> <span id="stat-learned">0</span></p>
+                <p><strong>Review:</strong> <span id="stat-review">0</span></p>
+                <p><strong>Mastered:</strong> <span id="stat-mastered">0</span></p>
+                <p><strong>🔥 Current Streak:</strong> <span id="stat-streak">0</span> Days</p>
+            </div>
+            <!-- Streak milestone indicators -->
+            <div class="streak-icons">
+                <span class="streak-icon" data-days="1">🔥 1 Day</span>
+                <span class="streak-icon" data-days="7">🔥 7 Days</span>
+                <span class="streak-icon" data-days="30">🔥 30 Days</span>
+                <span class="streak-icon" data-days="100">🔥 100 Days</span>
             </div>
         </section>
 
@@ -91,12 +101,6 @@
             <h2>Learn by Topic</h2>
             <div class="cards">
                 <div class="card">
-                    <span class="icon">🗨️</span>
-                    <h3>Daily English</h3>
-                    <p>Learn common Australian expressions used every day.</p>
-                    <a href="daily.html" class="btn">Start Learning</a>
-                </div>
-                <div class="card">
                     <span class="icon">🧸</span>
                     <h3>Childcare English</h3>
                     <p>Useful phrases for communicating with educators.</p>
@@ -110,9 +114,15 @@
                 </div>
                 <div class="card">
                     <span class="icon">🦘</span>
-                    <h3>Australian Life</h3>
-                    <p>Everyday language for living in Australia.</p>
+                    <h3>Australian English</h3>
+                    <p>Everyday language for living and working in Australia.</p>
                     <a href="life.html" class="btn">Start Learning</a>
+                </div>
+                <div class="card">
+                    <span class="icon">📖</span>
+                    <h3>Australian Vocabulary</h3>
+                    <p>Learn high‑frequency Australian words and terms.</p>
+                    <a href="vocabulary.html" class="btn">Start Learning</a>
                 </div>
             </div>
         </section>

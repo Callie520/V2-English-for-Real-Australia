@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quick Add | English for Real Australia</title>
+    <title>Australian Vocabulary | English for Real Australia</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
-<body data-page="quickadd">
+<body data-page="vocabulary">
     <header>
         <nav class="navbar">
             <div class="brand">English for Real Australia</div>
@@ -29,10 +29,10 @@
                 <li><a href="childcare.html">Childcare English</a></li>
                 <li><a href="nursing.html">Nursing English</a></li>
                 <li><a href="life.html">Australian English</a></li>
-                <li><a href="vocabulary.html">Australian Vocabulary</a></li>
+                <li><a href="vocabulary.html" class="active">Australian Vocabulary</a></li>
                 <li><a href="review.html">Review Center</a></li>
                 <li><a href="search.html">Search</a></li>
-                <li><a href="quickadd.html" class="active">Quick Add</a></li>
+                <li><a href="quickadd.html">Quick Add</a></li>
                 <li><a href="settings.html">Task Settings</a></li>
                 <li class="voice-select-item">
                     <select id="voice-select" title="Select accent">
@@ -46,26 +46,11 @@
     </header>
     <main>
         <section class="section-header">
-            <h1>Quick Add</h1>
-            <p>Add a new phrase quickly to your personal library.</p>
+            <h1>Australian Vocabulary</h1>
+            <p>High‑frequency words and terms used in Australia.</p>
         </section>
-        <section class="form-section">
-            <form id="quick-add-form" class="add-form">
-                <label for="qa-english">English</label>
-                <input type="text" id="qa-english" required placeholder="Enter English sentence">
-                <label for="qa-chinese">Chinese</label>
-                <input type="text" id="qa-chinese" required placeholder="Enter Chinese translation">
-                <label for="qa-category">Category</label>
-                <select id="qa-category">
-                    <option value="childcare">Childcare English</option>
-                    <option value="nursing">Nursing English</option>
-                    <option value="australian">Australian English</option>
-                    <option value="vocab">Australian Vocabulary</option>
-                </select>
-                <!-- Notes field removed to simplify the form for quick entry -->
-                <button type="submit" class="btn">Save</button>
-            </form>
-        </section>
+        <!-- Vocabulary items will be dynamically generated here -->
+        <section class="content-container" id="vocab-container"></section>
     </main>
     <footer>
         <p>&copy; 2026 English for Real Australia</p>
