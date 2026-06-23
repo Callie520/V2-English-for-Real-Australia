@@ -93,22 +93,59 @@ function generatePlanTasks() {
   const todayStr = today.toISOString().split('T')[0];
   let tasks = loadPlanTasks();
   const settings = loadPlanSettings();
-  // determine if tasks need regeneration
+  // If tasks exist for today and have a plan, update their lists and targets while preserving completed counts.
   if (tasks && tasks.date === todayStr && tasks.plan) {
-    // Verify that each category's target matches the current plan settings. If not, regenerate.
-    let match = true;
+    prepareAllItems();
+    const reviews = loadReviews();
+    const reviewKeys = Object.keys(reviews);
+    // Compute due review items by category
+    const dueByCat = { childcare: [], nursing: [], australian: [], vocab: [] };
+    const todayTime = today.getTime();
+    reviewKeys.forEach(id => {
+      const rec = reviews[id];
+      if (!rec) return;
+      if (rec.stage >= reviewSchedule.length) return; // mastered items are ignored
+      if (rec.nextReview <= todayTime) {
+        const item = itemsMap[id];
+        if (item && dueByCat[item.category]) {
+          dueByCat[item.category].push(id);
+        }
+      }
+    });
+    // Compute new items by category (items without review record)
+    const newByCat = { childcare: [], nursing: [], australian: [], vocab: [] };
+    allItems.forEach(it => {
+      if (!reviews[it.id] && newByCat[it.category]) {
+        newByCat[it.category].push(it.id);
+      }
+    });
+    for (const cat of ['childcare','nursing','australian','vocab']) {
+      const seg = tasks.plan[cat] || { completed: 0 };
+      const targetCount = settings[cat] || 0;
+      const dueList = dueByCat[cat] || [];
+      let needed = targetCount - dueList.length;
+      if (needed < 0) needed = 0;
+      const newList = newByCat[cat] ? newByCat[cat].slice(0, needed) : [];
+      const list = dueList.concat(newList);
+      // cap completed count to list length
+      if (typeof seg.completed !== 'number') seg.completed = 0;
+      if (seg.completed > list.length) seg.completed = list.length;
+      seg.target = targetCount;
+      seg.list = list;
+      tasks.plan[cat] = seg;
+    }
+    // update completion flag
+    let allDone = true;
     for (const cat of ['childcare','nursing','australian','vocab']) {
       const seg = tasks.plan[cat];
-      const expected = settings[cat];
-      // If the saved target does not equal the expected target, regenerate
-      if (!seg || seg.target !== expected) {
-        match = false;
+      if (!seg || seg.completed < seg.list.length) {
+        allDone = false;
         break;
       }
     }
-    if (match) {
-      return tasks;
-    }
+    tasks.completed = allDone;
+    savePlanTasks(tasks);
+    return tasks;
   }
   // prepare items
   prepareAllItems();
@@ -178,6 +215,24 @@ function updatePlanUI() {
   setProgress('plan-nursing-progress', plan.nursing);
   setProgress('plan-australian-progress', plan.australian);
   setProgress('plan-vocab-progress', plan.vocab);
+  // Update total completion percentage across all categories
+  const totalElem = document.getElementById('plan-total-progress');
+  if (totalElem) {
+    let totalDone = 0;
+    let totalCount = 0;
+    ['childcare','nursing','australian','vocab'].forEach(cat => {
+      const seg = plan[cat];
+      if (seg) {
+        totalDone += seg.completed || 0;
+        totalCount += Array.isArray(seg.list) ? seg.list.length : 0;
+      }
+    });
+    let percent = 0;
+    if (totalCount > 0) {
+      percent = Math.round((totalDone / totalCount) * 100);
+    }
+    totalElem.textContent = percent + '%';
+  }
 }
 
 /**
@@ -210,16 +265,19 @@ function updateStatsUI() {
   const streakEl = document.getElementById('stat-streak');
   const streakVal = info.streak || 0;
   if (streakEl) streakEl.textContent = streakVal;
-  // Update streak milestone icons: add active class if streak meets or exceeds milestone
-  const icons = document.querySelectorAll('.streak-icon');
-  icons.forEach(icon => {
-    const required = parseInt(icon.dataset.days, 10);
-    if (!isNaN(required) && streakVal >= required) {
-      icon.classList.add('active');
-    } else {
-      icon.classList.remove('active');
-    }
-  });
+  // We no longer display streak milestone icons. Only update the streak number.
+
+  // Save daily stats history for analytics. History is stored per date with learned, review and mastered counts.
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateStr = today.toISOString().split('T')[0];
+    const history = JSON.parse(localStorage.getItem('efra_statsHistory') || '{}');
+    history[dateStr] = { learned, review: reviewCount, mastered };
+    localStorage.setItem('efra_statsHistory', JSON.stringify(history));
+  } catch (err) {
+    // ignore errors
+  }
 }
 
 /**
@@ -1086,6 +1144,18 @@ function markMastered(id) {
   // No daily progress update needed for the plan-based system
 }
 
+/**
+ * Undo mastery for an item: remove its review record so it returns to normal study flow.
+ * @param {string} id
+ */
+function undoMastered(id) {
+  const reviews = loadReviews();
+  if (reviews[id]) {
+    delete reviews[id];
+    saveReviews(reviews);
+  }
+}
+
 // 完成一次复习：根据当前 stage 计算下一次复习时间
 function completeReview(id) {
   const reviews = loadReviews();
@@ -1596,13 +1666,17 @@ function createCard(item, onDone, autoplay = false) {
       actionsDiv.appendChild(masterBtn);
     } else {
       // Item is in review schedule
-      if (record.stage >= reviewSchedule.length) {
-        // Already mastered: show disabled button
-        const masteredBtn = document.createElement('button');
-        masteredBtn.className = 'master';
-        masteredBtn.textContent = '✅ Mastered';
-        masteredBtn.disabled = true;
-        actionsDiv.appendChild(masteredBtn);
+        if (record.stage >= reviewSchedule.length) {
+        // Already mastered: allow undo
+        const undoBtn = document.createElement('button');
+        undoBtn.className = 'undo-master-btn';
+        undoBtn.textContent = '↩ Undo Mastered';
+        undoBtn.addEventListener('click', () => {
+          undoMastered(item.id);
+          appendReviewControls();
+          // Do not count progress or move to next card on undo
+        });
+        actionsDiv.appendChild(undoBtn);
       } else {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -1653,7 +1727,13 @@ function createCard(item, onDone, autoplay = false) {
 // 渲染列表到容器
 function renderList(container, items) {
   container.innerHTML = '';
-  items.forEach(item => {
+  // Filter out mastered items: items whose review stage has reached the end of the schedule
+  const reviews = loadReviews();
+  const filtered = items.filter(item => {
+    const rec = reviews[item.id];
+    return !(rec && rec.stage >= reviewSchedule.length);
+  });
+  filtered.forEach(item => {
     const card = createCard(item);
     container.appendChild(card);
   });
@@ -1772,13 +1852,233 @@ function initSettingsPage() {
       vocab: parseInt(vocabInput.value, 10) || 0
     };
     savePlanSettings(newSettings);
-    // reset today's tasks so new settings take effect
-    localStorage.removeItem(PLAN_TASK_KEY);
+    // Generate or update today's tasks with the new settings, preserving current progress
     generatePlanTasks();
     updatePlanUI();
     updateStatsUI();
     alert('Settings saved!');
   });
+
+  // Setup data export and import controls
+  const exportBtn = document.getElementById('export-data-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      exportUserData();
+    });
+  }
+  const importBtn = document.getElementById('import-data-btn');
+  const importInput = document.getElementById('import-data-file');
+  if (importBtn && importInput) {
+    importBtn.addEventListener('click', () => {
+      importInput.value = '';
+      importInput.click();
+    });
+    importInput.addEventListener('change', () => {
+      const file = importInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const text = e.target.result;
+          const obj = JSON.parse(text);
+          importUserData(obj);
+          alert('Data imported successfully!');
+        } catch (err) {
+          alert('Failed to import data: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+}
+
+// Load stats history from localStorage. Returns an object mapping dates to {learned, review, mastered}
+function loadStatsHistory() {
+  try {
+    const h = JSON.parse(localStorage.getItem('efra_statsHistory') || '{}');
+    return h && typeof h === 'object' ? h : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+/**
+ * Export all EFRA-related data to a downloadable JSON file. It collects all
+ * localStorage entries whose keys start with 'efra_' and serializes them into
+ * a single JSON object. The file is automatically downloaded via a
+ * temporary link.
+ */
+function exportUserData() {
+  try {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('efra_')) {
+        data[key] = localStorage.getItem(key);
+      }
+    }
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const today = new Date().toISOString().split('T')[0];
+    a.download = `efra_backup_${today}.json`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }, 0);
+  } catch (err) {
+    alert('Failed to export data: ' + err.message);
+  }
+}
+
+/**
+ * Import user data from a JSON object. The input should be an object where
+ * keys correspond to localStorage keys (starting with 'efra_') and values
+ * are strings (JSON serialized). It writes each key back into localStorage
+ * and regenerates tasks and stats accordingly.
+ * @param {object} obj
+ */
+function importUserData(obj) {
+  try {
+    // Validate that obj is an object
+    if (!obj || typeof obj !== 'object') {
+      throw new Error('Invalid data format');
+    }
+    Object.keys(obj).forEach(key => {
+      if (key && key.startsWith('efra_')) {
+        localStorage.setItem(key, obj[key]);
+      }
+    });
+    // Regenerate plan tasks and update UI after import
+    generatePlanTasks();
+    updatePlanUI();
+    updateStatsUI();
+  } catch (err) {
+    alert('Failed to import data: ' + err.message);
+  }
+}
+
+/**
+ * Initialize the Learning Analytics page. It draws a simple line chart comparing
+ * the user's memory retention over time with a standard Ebbinghaus forgetting curve.
+ */
+function initAnalyticsPage() {
+  const canvas = document.getElementById('analytics-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const history = loadStatsHistory();
+  const dates = Object.keys(history).sort();
+  if (dates.length === 0) {
+    // No data available
+    const msg = document.createElement('p');
+    msg.textContent = 'No learning data yet.';
+    canvas.parentNode.appendChild(msg);
+    return;
+  }
+  // Build user retention and theoretical Ebbinghaus retention values
+  const userData = [];
+  const ebbData = [];
+  dates.forEach((date, index) => {
+    const rec = history[date];
+    const learned = rec && typeof rec.learned === 'number' ? rec.learned : 0;
+    const mastered = rec && typeof rec.mastered === 'number' ? rec.mastered : 0;
+    const retention = learned > 0 ? (mastered / learned) * 100 : 0;
+    userData.push(retention);
+    // Ebbinghaus retention as exponential decay. k chosen to approximate forgetting curve.
+    const theoretical = Math.exp(-0.3 * index) * 100;
+    ebbData.push(theoretical);
+  });
+  // Chart dimensions and padding
+  const width = canvas.width;
+  const height = canvas.height;
+  const padding = 40;
+  // Determine scales
+  const maxVal = 100;
+  const xStep = (width - 2 * padding) / (dates.length - 1);
+  // Clear canvas
+  ctx.clearRect(0, 0, width, height);
+  // Draw axes
+  ctx.strokeStyle = '#ccc';
+  ctx.lineWidth = 1;
+  // y-axis
+  ctx.beginPath();
+  ctx.moveTo(padding, padding);
+  ctx.lineTo(padding, height - padding);
+  ctx.lineTo(width - padding, height - padding);
+  ctx.stroke();
+  // y-axis labels
+  ctx.fillStyle = '#666';
+  ctx.font = '12px sans-serif';
+  for (let i = 0; i <= 5; i++) {
+    const yVal = maxVal * (i / 5);
+    const yPos = height - padding - ((height - 2 * padding) * (i / 5));
+    ctx.fillText(Math.round(yVal) + '%', 5, yPos + 3);
+    // horizontal grid line
+    ctx.strokeStyle = '#f0f0f0';
+    ctx.beginPath();
+    ctx.moveTo(padding, yPos);
+    ctx.lineTo(width - padding, yPos);
+    ctx.stroke();
+  }
+  // x-axis labels: show only first and last date and maybe mid if many
+  dates.forEach((date, idx) => {
+    const x = padding + xStep * idx;
+    if (idx === 0 || idx === dates.length - 1 || (dates.length > 4 && idx % Math.ceil(dates.length / 4) === 0)) {
+      ctx.save();
+      ctx.translate(x, height - padding + 15);
+      ctx.rotate(-Math.PI / 6);
+      ctx.fillStyle = '#666';
+      ctx.fillText(date.slice(5), 0, 0);
+      ctx.restore();
+    }
+  });
+  // Helper to convert value to y coordinate
+  function valToY(val) {
+    return height - padding - (val / maxVal) * (height - 2 * padding);
+  }
+  // Draw user retention line (blue)
+  ctx.strokeStyle = '#2272C9';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  userData.forEach((val, idx) => {
+    const x = padding + xStep * idx;
+    const y = valToY(val);
+    if (idx === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+  // Draw Ebbinghaus curve line (orange)
+  ctx.strokeStyle = '#e07a5f';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ebbData.forEach((val, idx) => {
+    const x = padding + xStep * idx;
+    const y = valToY(val);
+    if (idx === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+  // Draw legend
+  const legendX = padding;
+  const legendY = padding - 20;
+  ctx.fillStyle = '#2272C9';
+  ctx.fillRect(legendX, legendY, 10, 10);
+  ctx.fillStyle = '#000';
+  ctx.fillText('Your retention', legendX + 15, legendY + 9);
+  ctx.fillStyle = '#e07a5f';
+  ctx.fillRect(legendX + 120, legendY, 10, 10);
+  ctx.fillStyle = '#000';
+  ctx.fillText('Ebbinghaus curve', legendX + 135, legendY + 9);
 }
 
 // 初始化收藏页面
@@ -2124,6 +2424,9 @@ document.addEventListener('DOMContentLoaded', () => {
       break;
     case 'difficult':
       initDifficultPage();
+      break;
+    case 'analytics':
+      initAnalyticsPage();
       break;
     default:
       // 首页

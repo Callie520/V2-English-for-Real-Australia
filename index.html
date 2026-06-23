@@ -38,6 +38,7 @@
                 <li><a href="search.html">Search</a></li>
                 <li><a href="quickadd.html">Quick Add</a></li>
                 <li><a href="settings.html">Task Settings</a></li>
+                <li><a href="analytics.html">Learning Analytics</a></li>
                 <!-- Voice selection -->
                 <li class="voice-select-item">
                     <select id="voice-select" title="Select accent">
@@ -59,6 +60,7 @@
                 <p><strong>Nursing:</strong> <span id="plan-nursing-progress">0 / 0</span></p>
                 <p><strong>Australian English:</strong> <span id="plan-australian-progress">0 / 0</span></p>
                 <p><strong>Vocabulary:</strong> <span id="plan-vocab-progress">0 / 0</span></p>
+                <p><strong>Total Completion:</strong> <span id="plan-total-progress">0%</span></p>
             </div>
             <div class="plan-start" style="margin-top:1rem;">
                 <button id="start-today-btn" class="btn">Start Today</button>
@@ -74,58 +76,14 @@
                 <p><strong>Mastered:</strong> <span id="stat-mastered">0</span></p>
                 <p><strong>🔥 Current Streak:</strong> <span id="stat-streak">0</span> Days</p>
             </div>
-            <!-- Streak milestone indicators -->
-            <div class="streak-icons">
-                <span class="streak-icon" data-days="1">🔥 1 Day</span>
-                <span class="streak-icon" data-days="7">🔥 7 Days</span>
-                <span class="streak-icon" data-days="30">🔥 30 Days</span>
-                <span class="streak-icon" data-days="100">🔥 100 Days</span>
-            </div>
+            <!-- Streak milestone indicators removed for minimalist view -->
         </section>
 
-        <!-- 首屏欢迎区，展示欢迎信息和示意图 -->
-        <section class="hero">
-            <div class="hero-text">
-                <h1>Welcome to English for Real Australia</h1>
-                <p>Your friendly guide to everyday Australian English.</p>
-            </div>
-            <img src="images/hero.png" alt="Mobile app preview for English for Real Australia">
-        </section>
-        <!-- Install App button: displayed via JavaScript when PWA installation is supported -->
+        <!-- Removed hero and promotional sections for a minimalist home page -->
+        <!-- Install App button remains below for PWA installation if supported -->
         <div class="install-app-container">
             <button id="install-button" class="install-btn" style="display:none;">Install App</button>
         </div>
-        
-        <!-- 功能概览，包含四个主要模块的简介 -->
-        <section class="features">
-            <h2>Learn by Topic</h2>
-            <div class="cards">
-                <div class="card">
-                    <span class="icon">🧸</span>
-                    <h3>Childcare English</h3>
-                    <p>Useful phrases for communicating with educators.</p>
-                    <a href="childcare.html" class="btn">Start Learning</a>
-                </div>
-                <div class="card">
-                    <span class="icon">🩺</span>
-                    <h3>Nursing English</h3>
-                    <p>Essential language for care and medical settings.</p>
-                    <a href="nursing.html" class="btn">Start Learning</a>
-                </div>
-                <div class="card">
-                    <span class="icon">🦘</span>
-                    <h3>Australian English</h3>
-                    <p>Everyday language for living and working in Australia.</p>
-                    <a href="life.html" class="btn">Start Learning</a>
-                </div>
-                <div class="card">
-                    <span class="icon">📖</span>
-                    <h3>Australian Vocabulary</h3>
-                    <p>Learn high‑frequency Australian words and terms.</p>
-                    <a href="vocabulary.html" class="btn">Start Learning</a>
-                </div>
-            </div>
-        </section>
         <!-- Container for today's study mode; hidden by default. Displayed when Start Today is clicked -->
         <section id="today-study-container" style="display:none; padding:1rem;"></section>
     </main>

@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Childcare English | English for Real Australia</title>
+    <title>Learning Analytics | English for Real Australia</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
-    <!-- PWA manifest and meta tags -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2272C9">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
-<body data-page="childcare">
+<body data-page="analytics">
     <header>
         <nav class="navbar">
             <div class="brand">English for Real Australia</div>
@@ -25,9 +24,8 @@
                 <span class="bar"></span>
             </button>
             <ul class="nav-links">
-                <!-- Updated navigation: remove daily and favorites, rename life to Australian English, add vocabulary and settings -->
                 <li><a href="index.html">Home</a></li>
-                <li><a href="childcare.html" class="active">Childcare English</a></li>
+                <li><a href="childcare.html">Childcare English</a></li>
                 <li><a href="nursing.html">Nursing English</a></li>
                 <li><a href="life.html">Australian English</a></li>
                 <li><a href="vocabulary.html">Australian Vocabulary</a></li>
@@ -35,7 +33,7 @@
                 <li><a href="search.html">Search</a></li>
                 <li><a href="quickadd.html">Quick Add</a></li>
                 <li><a href="settings.html">Task Settings</a></li>
-                <li><a href="analytics.html">Learning Analytics</a></li>
+                <li><a href="analytics.html" class="active">Learning Analytics</a></li>
                 <li class="voice-select-item">
                     <select id="voice-select" title="Select accent">
                         <option value="au">AU</option>
@@ -47,21 +45,19 @@
         </nav>
     </header>
     <main>
-        <!-- 页头 -->
         <section class="section-header">
-            <h1>Childcare English</h1>
-            <p>Useful phrases for communicating with educators and carers.</p>
+            <h1>Learning Analytics</h1>
+            <p>Track your memory retention over time compared with the Ebbinghaus forgetting curve.</p>
         </section>
-        
-        <!-- 动态短语区域，将通过脚本生成幼儿园英语卡片 -->
-        <section class="content-container" id="childcare-container"></section>
+        <section class="analytics-section" style="padding:1rem;">
+            <canvas id="analytics-chart" width="600" height="400" style="max-width:100%; height:auto; border:1px solid #ddd;"></canvas>
+            <p id="analytics-message"></p>
+        </section>
     </main>
     <footer>
         <p>&copy; 2026 English for Real Australia</p>
     </footer>
-    <!-- 数据文件包含各学习模块的短语数据 -->
     <script src="js/data.js"></script>
-    <!-- 主脚本文件 -->
     <script src="js/script.js"></script>
 </body>
 </html>

@@ -1,7 +1,8 @@
 // Service Worker for English for Real Australia PWA
 // This service worker caches application shell files so that the app can be used offline.
 
-const CACHE_NAME = 'efra-cache-v1';
+// Updated cache name to force new version of service worker and assets cache
+const CACHE_NAME = 'efra-cache-v2';
 const ASSETS_TO_CACHE = [
   './',
   'index.html',
@@ -13,6 +14,7 @@ const ASSETS_TO_CACHE = [
   'review.html',
   'search.html',
   'quickadd.html',
+  'analytics.html',
   // We no longer cache daily.html and smartadd.html as these pages are removed from navigation.
   // Optionally cache favorites and difficult pages for backward compatibility if accessed directly.
   'favorites.html',

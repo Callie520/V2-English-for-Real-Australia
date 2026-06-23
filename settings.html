@@ -33,6 +33,7 @@
                 <li><a href="search.html">Search</a></li>
                 <li><a href="quickadd.html">Quick Add</a></li>
                 <li><a href="settings.html" class="active">Task Settings</a></li>
+                <li><a href="analytics.html">Learning Analytics</a></li>
                 <li class="voice-select-item">
                     <select id="voice-select" title="Select accent">
                         <option value="au">AU</option>
@@ -60,6 +61,14 @@
                 <input type="number" id="setting-vocab" min="0" max="50" step="1" required>
                 <button type="submit" class="btn" style="margin-top:1rem;">Save Settings</button>
             </form>
+        </section>
+        <!-- Data Backup Section -->
+        <section class="backup-section" style="max-width:500px; margin:2rem auto; text-align:center;">
+            <h2>Data Backup</h2>
+            <p>You can export your progress and settings or import a backup file.</p>
+            <button id="export-data-btn" class="btn" style="margin-top:0.5rem;">Export Data</button>
+            <input type="file" id="import-data-file" accept="application/json" style="display:none;">
+            <button id="import-data-btn" class="btn" style="margin-top:0.5rem;">Import Data</button>
         </section>
     </main>
     <footer>
