@@ -98,18 +98,15 @@ function generatePlanTasks() {
     prepareAllItems();
     const reviews = loadReviews();
     const reviewKeys = Object.keys(reviews);
-    // Compute due review items by category
-    const dueByCat = { childcare: [], nursing: [], australian: [], vocab: [] };
     const todayTime = today.getTime();
+    // Compute due review items across all categories
+    const dueReviewList = [];
     reviewKeys.forEach(id => {
       const rec = reviews[id];
       if (!rec) return;
-      if (rec.stage >= reviewSchedule.length) return; // mastered items are ignored
+      if (rec.stage >= reviewSchedule.length) return; // mastered items ignored
       if (rec.nextReview <= todayTime) {
-        const item = itemsMap[id];
-        if (item && dueByCat[item.category]) {
-          dueByCat[item.category].push(id);
-        }
+        dueReviewList.push(id);
       }
     });
     // Compute new items by category (items without review record)
@@ -119,23 +116,31 @@ function generatePlanTasks() {
         newByCat[it.category].push(it.id);
       }
     });
+    // Update review segment
+    const reviewSeg = tasks.plan.review || { completed: 0 };
+    const reviewTarget = dueReviewList.length;
+    if (typeof reviewSeg.completed !== 'number') reviewSeg.completed = 0;
+    if (reviewSeg.completed > reviewTarget) reviewSeg.completed = reviewTarget;
+    reviewSeg.target = reviewTarget;
+    reviewSeg.list = dueReviewList;
+    tasks.plan.review = reviewSeg;
+    // Update new segments per category
     for (const cat of ['childcare','nursing','australian','vocab']) {
       const seg = tasks.plan[cat] || { completed: 0 };
       const targetCount = settings[cat] || 0;
-      const dueList = dueByCat[cat] || [];
-      let needed = targetCount - dueList.length;
-      if (needed < 0) needed = 0;
-      const newList = newByCat[cat] ? newByCat[cat].slice(0, needed) : [];
-      const list = dueList.concat(newList);
-      // cap completed count to list length
+      const newList = newByCat[cat] ? newByCat[cat].slice(0, targetCount) : [];
       if (typeof seg.completed !== 'number') seg.completed = 0;
-      if (seg.completed > list.length) seg.completed = list.length;
+      if (seg.completed > newList.length) seg.completed = newList.length;
       seg.target = targetCount;
-      seg.list = list;
+      seg.list = newList;
       tasks.plan[cat] = seg;
     }
-    // update completion flag
+    // Update completion flag: must finish all new and review tasks
     let allDone = true;
+    // Check review
+    const rs = tasks.plan.review;
+    if (rs && rs.completed < rs.list.length) allDone = false;
+    // Check categories
     for (const cat of ['childcare','nursing','australian','vocab']) {
       const seg = tasks.plan[cat];
       if (!seg || seg.completed < seg.list.length) {
@@ -150,41 +155,33 @@ function generatePlanTasks() {
   // prepare items
   prepareAllItems();
   const reviews = loadReviews();
-  const reviewKeys = Object.keys(reviews);
-  // compute due review items by category
-  const dueByCat = { childcare: [], nursing: [], australian: [], vocab: [] };
-  const todayTime = today.getTime();
-  reviewKeys.forEach(id => {
+  const reviewKeysAll = Object.keys(reviews);
+  const todayTimeNew = today.getTime();
+  // compute due review items across all categories
+  const dueReviewListNew = [];
+  reviewKeysAll.forEach(id => {
     const rec = reviews[id];
     if (!rec) return;
     if (rec.stage >= reviewSchedule.length) return; // mastered
-    if (rec.nextReview <= todayTime) {
-      const item = itemsMap[id];
-      if (item && dueByCat[item.category]) {
-        dueByCat[item.category].push(id);
-      }
+    if (rec.nextReview <= todayTimeNew) {
+      dueReviewListNew.push(id);
     }
   });
   // compute new items by category: items without review record
-  const newByCat = { childcare: [], nursing: [], australian: [], vocab: [] };
+  const newByCatNew = { childcare: [], nursing: [], australian: [], vocab: [] };
   allItems.forEach(it => {
-    if (!reviews[it.id] && newByCat[it.category]) {
-      newByCat[it.category].push(it.id);
+    if (!reviews[it.id] && newByCatNew[it.category]) {
+      newByCatNew[it.category].push(it.id);
     }
   });
-  // Do not shuffle new items within each category. We maintain the original order to provide a consistent learning path.
-  // Build tasks.plan
   const plan = {};
+  // Review segment
+  plan.review = { target: dueReviewListNew.length, list: dueReviewListNew, completed: 0 };
+  // New segments per category
   for (const cat of ['childcare','nursing','australian','vocab']) {
-    const dueList = dueByCat[cat] || [];
     const targetCount = settings[cat] || 0;
-    // Determine number of new items needed (target minus due count; allow due items beyond target)
-    let needed = targetCount - dueList.length;
-    if (needed < 0) needed = 0;
-    const newList = newByCat[cat] ? newByCat[cat].slice(0, needed) : [];
-    const list = dueList.concat(newList);
-    // Save the target count separately; not the list length. This ensures regeneration when settings change.
-    plan[cat] = { target: targetCount, list: list, completed: 0 };
+    const newList = newByCatNew[cat] ? newByCatNew[cat].slice(0, targetCount) : [];
+    plan[cat] = { target: targetCount, list: newList, completed: 0 };
   }
   tasks = {
     date: todayStr,
@@ -215,11 +212,24 @@ function updatePlanUI() {
   setProgress('plan-nursing-progress', plan.nursing);
   setProgress('plan-australian-progress', plan.australian);
   setProgress('plan-vocab-progress', plan.vocab);
-  // Update total completion percentage across all categories
+  // Update review progress
+  const reviewEl = document.getElementById('plan-review-progress');
+  if (reviewEl && plan.review) {
+    const seg = plan.review;
+    const total = Array.isArray(seg.list) ? seg.list.length : 0;
+    const done = seg.completed || 0;
+    reviewEl.textContent = done + ' / ' + total;
+  }
+  // Update total completion percentage across all categories and review tasks
   const totalElem = document.getElementById('plan-total-progress');
   if (totalElem) {
     let totalDone = 0;
     let totalCount = 0;
+    // Include review progress
+    if (plan.review) {
+      totalDone += plan.review.completed || 0;
+      totalCount += Array.isArray(plan.review.list) ? plan.review.list.length : 0;
+    }
     ['childcare','nursing','australian','vocab'].forEach(cat => {
       const seg = plan[cat];
       if (seg) {
@@ -296,6 +306,50 @@ function incrementPlanProgress(cat) {
   updatePlanUI();
   updateStatsUI();
   // Check if all categories are done
+  let allDone = true;
+  for (const key of Object.keys(tasks.plan)) {
+    const s = tasks.plan[key];
+    if (s.completed < s.list.length) {
+      allDone = false;
+      break;
+    }
+  }
+  tasks.completed = allDone;
+  savePlanTasks(tasks);
+  if (allDone) {
+    // update streak and last completion date
+    const info = loadDailyInfo();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    if (info.lastCompletionDate === yesterdayStr) {
+      info.streak = (info.streak || 0) + 1;
+    } else {
+      info.streak = 1;
+    }
+    info.lastCompletionDate = todayStr;
+    saveDailyInfo(info);
+    updateStatsUI();
+  }
+}
+
+/**
+ * Increment progress for the review tasks in today's plan. Called after a due review item
+ * has been reviewed within the study plan. Updates streak when all tasks complete.
+ */
+function incrementReviewProgress() {
+  let tasks = generatePlanTasks();
+  if (!tasks.plan || !tasks.plan.review) return;
+  const seg = tasks.plan.review;
+  if (typeof seg.completed !== 'number') seg.completed = 0;
+  seg.completed++;
+  savePlanTasks(tasks);
+  updatePlanUI();
+  updateStatsUI();
+  // Check if all tasks (review and categories) are done
   let allDone = true;
   for (const key of Object.keys(tasks.plan)) {
     const s = tasks.plan[key];
@@ -1218,7 +1272,8 @@ function toggleFavorite(id) {
  * reviews 对象结构： { [id]: { stage: Number, nextReview: Number } }
  * stage 表示已经完成的复习次数，0 表示刚加入复习，1 表示完成第一次复习，以此类推。
  */
-const reviewSchedule = [0, 1, 2, 4, 7, 15, 30];
+// Simplified Ebbinghaus schedule: [1, 3, 7, 14, 30] days
+const reviewSchedule = [1, 3, 7, 14, 30];
 
 function loadReviews() {
   try {
@@ -1241,9 +1296,14 @@ function getReview(id) {
 // 加入复习（或标记为已学习）
 function addToReview(id) {
   const reviews = loadReviews();
+  // When first learning an item, set reviewLevel (stage) to 0 and schedule the first review for
+  // tomorrow (after 1 day). According to reviewSchedule[0] = 1.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const nextTime = today.getTime() + reviewSchedule[0] * 24 * 60 * 60 * 1000;
   reviews[id] = {
     stage: 0,
-    nextReview: Date.now()
+    nextReview: nextTime
   };
   saveReviews(reviews);
   // For the new plan-based system we no longer update daily progress here.
@@ -1383,16 +1443,24 @@ function startTodayStudyPlan() {
   container.style.display = 'block';
   // Generate tasks
   const tasks = generatePlanTasks();
-  const order = ['childcare','nursing','australian','vocab'];
   const queue = [];
+  // First push new items by category in fixed order
+  const order = ['childcare','nursing','australian','vocab'];
   order.forEach(cat => {
     const seg = tasks.plan && tasks.plan[cat];
     if (seg && Array.isArray(seg.list)) {
       seg.list.forEach(id => {
-        queue.push({ id, category: cat });
+        queue.push({ id, category: cat, type: 'new' });
       });
     }
   });
+  // Then push review items
+  const reviewSeg = tasks.plan && tasks.plan.review;
+  if (reviewSeg && Array.isArray(reviewSeg.list)) {
+    reviewSeg.list.forEach(id => {
+      queue.push({ id, category: 'review', type: 'review' });
+    });
+  }
   let index = 0;
   function showNext() {
     if (index >= queue.length) {
@@ -1405,19 +1473,35 @@ function startTodayStudyPlan() {
       updateStatsUI();
       return;
     }
-    const { id, category } = queue[index];
-    const item = getItemById(id);
-    if (!item) {
-      index++;
-      showNext();
-      return;
-    }
-    container.innerHTML = '';
-    const card = createCard(item, () => {
-      index++;
-      showNext();
-    }, true);
-    container.appendChild(card);
+      const current = queue[index];
+      const item = getItemById(current.id);
+      if (!item) {
+        index++;
+        showNext();
+        return;
+      }
+      container.innerHTML = '';
+      const card = createCard(item, () => {
+        // After finishing this card, handle review scheduling and progress update
+        if (current.type === 'review') {
+          // Complete review: update review record and increment review progress
+          incrementReviewProgress();
+        } else {
+          // For new items: automatically add to review if not already scheduled
+          const rec = getReview(current.id);
+          // Only add if not mastered and not already scheduled
+          if (!rec) {
+            addToReview(current.id);
+          } else if (rec && rec.stage >= reviewSchedule.length) {
+            // if mastered, do nothing
+          }
+          // Increment progress for the category
+          incrementPlanProgress(current.category);
+        }
+        index++;
+        showNext();
+      }, true);
+      container.appendChild(card);
     // Auto play is handled by createCard when third argument true
   }
   showNext();
@@ -1772,10 +1856,7 @@ function createCard(item, onDone, autoplay = false) {
     const record = getReview(item.id);
     // Helper to proceed to next card if callback is provided
     function finishAction() {
-      // Increment plan progress if applicable
-      if (item.category) {
-        incrementPlanProgress(item.category);
-      }
+      // Progress updates for plan are handled in the caller (e.g., startTodayStudyPlan).
       if (typeof onDone === 'function') {
         onDone();
       } else if (typeof window.currentPageRender === 'function') {
@@ -2121,6 +2202,8 @@ function initAnalyticsPage() {
       msg.textContent = 'More learning data is needed. Complete more cards to unlock analytics.';
       canvas.parentNode.appendChild(msg);
     }
+    // Also update summary statistics and history list even if chart is not drawn
+    updateAnalyticsStats();
     return;
   }
   // Build user retention and theoretical Ebbinghaus retention values
@@ -2223,6 +2306,100 @@ function initAnalyticsPage() {
   ctx.fillRect(legendX + 120, legendY, 10, 10);
   ctx.fillStyle = '#000';
   ctx.fillText('Ebbinghaus curve', legendX + 135, legendY + 9);
+
+  // After drawing the chart, also update summary stats and history table
+  updateAnalyticsStats();
+}
+
+/**
+ * Populate analytics summary statistics and recent history table. This function
+ * displays total learned, total review, mastered counts, today's due review
+ * count, and a table of the last 7 days of learning statistics.
+ */
+function updateAnalyticsStats() {
+  const statsDiv = document.getElementById('analytics-stats');
+  const historyDiv = document.getElementById('analytics-history');
+  if (!statsDiv || !historyDiv) return;
+  // Compute overall stats
+  prepareAllItems();
+  const reviews = loadReviews();
+  let learned = 0;
+  let reviewCount = 0;
+  let masteredCount = 0;
+  Object.keys(reviews).forEach(id => {
+    const rec = reviews[id];
+    learned++;
+    if (rec.stage >= reviewSchedule.length) {
+      masteredCount++;
+    } else {
+      reviewCount++;
+    }
+  });
+  // Today's due reviews
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const todayTime = today.getTime();
+  let dueReview = 0;
+  Object.keys(reviews).forEach(id => {
+    const rec = reviews[id];
+    if (rec.stage < reviewSchedule.length && rec.nextReview <= todayTime) {
+      dueReview++;
+    }
+  });
+  // Render summary
+  statsDiv.innerHTML = '';
+  const list = document.createElement('ul');
+  list.style.listStyle = 'none';
+  list.style.padding = '0';
+  list.innerHTML =
+    '<li>Total learned: ' + learned + '</li>' +
+    '<li>Currently in review: ' + reviewCount + '</li>' +
+    '<li>Mastered: ' + masteredCount + '</li>' +
+    '<li>Due for review today: ' + dueReview + '</li>';
+  statsDiv.appendChild(list);
+  // Build recent history table for last 7 days
+  const history = loadStatsHistory();
+  const dates = Object.keys(history).sort();
+  // Get last 7 dates
+  const lastDates = dates.slice(-7);
+  // Clear historyDiv
+  historyDiv.innerHTML = '';
+  if (lastDates.length === 0) {
+    const msg = document.createElement('p');
+    msg.textContent = 'No history data available.';
+    historyDiv.appendChild(msg);
+  } else {
+    const table = document.createElement('table');
+    table.style.borderCollapse = 'collapse';
+    table.style.width = '100%';
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    ['Date','Learned','Review','Mastered'].forEach(text => {
+      const th = document.createElement('th');
+      th.textContent = text;
+      th.style.border = '1px solid #ddd';
+      th.style.padding = '6px';
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    lastDates.forEach(date => {
+      const rec = history[date];
+      const tr = document.createElement('tr');
+      const fields = [date, rec.learned || 0, rec.review || 0, rec.mastered || 0];
+      fields.forEach(val => {
+        const td = document.createElement('td');
+        td.textContent = val;
+        td.style.border = '1px solid #ddd';
+        td.style.padding = '6px';
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    historyDiv.appendChild(table);
+  }
 }
 
 // 初始化收藏页面
